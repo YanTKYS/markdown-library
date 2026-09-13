@@ -1,0 +1,10 @@
+{
+  "prompts": [
+    "meeting-minutes.md",
+    "document-review.md",
+    "policy-ideas.md",
+    "survey-free-text.md",
+    "workflow-review.md",
+    "excel-formula.md"
+  ]
+}
