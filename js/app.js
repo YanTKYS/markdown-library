@@ -95,31 +95,53 @@
     return { meta: meta, body: text.slice(match[0].length) };
   }
 
-  // 「## 見出し」で本文を区切る。「###」以下は本文の一部として扱う。
-  function splitSections(body) {
-    var sections = {};
-    var current = null;
-    var buffer = [];
+  // 「## 見出し」の行なら見出し文字列を返す。「###」以下は本文の一部として扱う。
+  function headingText(line) {
+    var match = /^##[ \t]+(.+?)[ \t]*$/.exec(line);
+    return match ? match[1] : null;
+  }
 
-    body.split('\n').forEach(function (line) {
-      var heading = /^##[ \t]+(.+?)[ \t]*$/.exec(line);
-      if (heading) {
-        if (current !== null) sections[current] = buffer.join('\n').trim();
-        current = heading[1];
-        buffer = [];
-      } else if (current !== null) {
-        buffer.push(line);
+  function findHeading(lines, name) {
+    for (var i = 0; i < lines.length; i++) {
+      if (headingText(lines[i]) === name) return i;
+    }
+    return -1;
+  }
+
+  /*
+   * 本文から「使い方」と「プロンプト」を取り出す。
+   * プロンプトは「## プロンプト」の次の行から Markdown 末尾までとする。
+   * プロンプト自体が「## 前提条件」「## 出力形式」のように見出しで構造化されて
+   * いても欠けないようにするため、途中の見出しでは区切らない。
+   * その代わり「使い方」は「## プロンプト」より前に置く決まりとする。
+   */
+  function parseBody(body) {
+    var lines = body.split('\n');
+    var promptIndex = findHeading(lines, 'プロンプト');
+
+    var prompt = promptIndex === -1 ? '' : lines.slice(promptIndex + 1).join('\n').trim();
+    var head = promptIndex === -1 ? lines : lines.slice(0, promptIndex);
+
+    var usage = '';
+    var usageIndex = findHeading(head, '使い方');
+    if (usageIndex !== -1) {
+      var rest = head.slice(usageIndex + 1);
+      var end = rest.length;
+      for (var i = 0; i < rest.length; i++) {
+        if (headingText(rest[i]) !== null) { end = i; break; }
       }
-    });
-    if (current !== null) sections[current] = buffer.join('\n').trim();
+      usage = rest.slice(0, end).join('\n').trim();
+    }
 
-    return sections;
+    return { usage: usage, prompt: prompt };
   }
 
   // プロンプト全体がコードフェンスで囲まれている場合だけ、その囲みを外す。
+  // 本文中にもフェンスがある場合は構造を壊すため、何もしない。
   function stripOuterFence(text) {
     var lines = text.split('\n');
-    if (lines.length >= 2 && /^```/.test(lines[0]) && /^```\s*$/.test(lines[lines.length - 1])) {
+    var fences = lines.filter(function (line) { return /^```/.test(line); }).length;
+    if (fences === 2 && /^```/.test(lines[0]) && /^```\s*$/.test(lines[lines.length - 1])) {
       return lines.slice(1, -1).join('\n').trim();
     }
     return text;
@@ -134,10 +156,10 @@
   function parsePrompt(fileName, text) {
     var parsed = parseFrontMatter(text.replace(/^\uFEFF/, '').replace(/\r\n?/g, '\n'));
     var meta = parsed.meta;
-    var sections = splitSections(parsed.body);
+    var body = parseBody(parsed.body);
 
-    var promptBody = sections['プロンプト'];
-    var hasPromptSection = typeof promptBody === 'string' && promptBody !== '';
+    var promptBody = body.prompt;
+    var hasPromptSection = promptBody !== '';
     if (!hasPromptSection) {
       // 「## プロンプト」が無い場合は、H1 見出しを除いた本文全体をコピー対象とする。
       promptBody = parsed.body.replace(/^\s*#[ \t]+.*\n/, '').trim();
@@ -153,7 +175,7 @@
       category: (meta.category || '未分類').trim(),
       tags: tags,
       description: meta.description || '',
-      usage: sections['使い方'] || '',
+      usage: body.usage,
       prompt: stripOuterFence(promptBody),
       hasPromptSection: hasPromptSection,
       // 検索対象: タイトル / 説明 / カテゴリ / タグ / 本文
