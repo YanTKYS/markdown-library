@@ -27,6 +27,20 @@
   color: var(--ink-soft);
 }
 
+/* 補助的な読み込み手段（ローカルファイルを直接開く）。主要導線にはしない。 */
+.aux-load {
+  margin-top: 10px;
+  font-size: 13px;
+  color: var(--ink-soft);
+}
+
+.aux-load summary {
+  cursor: pointer;
+  color: var(--accent);
+}
+
+.aux-load .file-label { margin-top: 8px; }
+
 .editor-grid {
   display: grid;
   grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
