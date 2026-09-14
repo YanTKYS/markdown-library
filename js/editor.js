@@ -200,6 +200,50 @@
     return filenameError(name) === '';
   }
 
+  // ---------------------------------------------------------------
+  // 詳細画面からの「このプロンプトを編集」導線（?file=... で開いた場合）
+  // 読み込み対象は必ず prompts/ 直下のファイル名1つに限定し、
+  // パス区切り文字や特殊名を含む値はパストラバーサル防止のため拒否する。
+  // ---------------------------------------------------------------
+  function isSafePromptFilename(name) {
+    if (typeof name !== 'string' || name === '') return false;
+    if (name === '.' || name === '..') return false;
+    if (FORBIDDEN_CHARS_REGEX.test(name)) return false; // \ / : * ? " < > | （区切り文字を含む＝経路指定を拒否）
+    if (CONTROL_CHARS_REGEX.test(name)) return false;
+    if (!/\.md$/i.test(name)) return false;
+    return true;
+  }
+
+  function loadPromptFromLibrary(rawName) {
+    var name = String(rawName || '').normalize('NFC');
+
+    if (!isSafePromptFilename(name)) {
+      el.loadStatus.textContent = '指定されたファイル名は読み込めません（' + name + '）。prompts/ 直下の .md ファイル名を指定してください。';
+      return;
+    }
+
+    el.loadStatus.textContent = name + ' を読み込んでいます…';
+
+    fetch(url('prompts/' + name), { cache: 'no-cache' }).then(function (response) {
+      if (!response.ok) throw new Error('HTTP ' + response.status);
+      return response.text();
+    }).then(function (text) {
+      var parsed = PromptParser.parse(text);
+      applyParsed(parsed, name);
+      el.loadStatus.textContent = '「' + name + '」を読み込みました。内容を編集して保存してください。';
+    }).catch(function (error) {
+      el.loadStatus.textContent = '「' + name + '」を読み込めませんでした。prompts/ フォルダに存在するか確認してください。' +
+        '（' + (error && error.message ? error.message : error) + '）';
+    });
+  }
+
+  function loadFromQueryString() {
+    var params = new URLSearchParams(window.location.search);
+    var raw = params.get('file');
+    if (!raw) return;
+    loadPromptFromLibrary(raw);
+  }
+
   function renderPreviewDetail(fields) {
     var html = '<header class="detail-header">' +
       '<span class="card-category">' + esc(fields.category || '(カテゴリ未設定)') + '</span>' +
@@ -426,6 +470,7 @@
       renderCategoryChips();
       renderTagChips();
       updatePreview();
+      loadFromQueryString();
     });
   }
 

@@ -27,15 +27,17 @@
   </div>
 
   <section class="editor-section">
-    <h2 class="editor-section-title">読み込み</h2>
     <div class="load-row">
-      <button type="button" id="btn-new" class="button button-quiet">新規作成</button>
-      <label class="button button-quiet file-label">
-        既存の .md ファイルを開く
-        <input type="file" id="file-input" accept=".md,.markdown,text/markdown" hidden>
-      </label>
+      <button type="button" id="btn-new" class="button button-quiet">新しいプロンプトを作成</button>
       <span id="load-status" class="load-status" role="status"></span>
     </div>
+    <details class="aux-load">
+      <summary>ローカルの .md ファイルを直接開く（上級者向け）</summary>
+      <label class="button button-quiet file-label">
+        ファイルを選択
+        <input type="file" id="file-input" accept=".md,.markdown,text/markdown" hidden>
+      </label>
+    </details>
   </section>
 
   <div class="editor-grid">

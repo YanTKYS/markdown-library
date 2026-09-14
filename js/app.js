@@ -218,7 +218,10 @@
     html += '<section class="detail-section">' +
       '<div class="prompt-bar">' +
         '<h3>プロンプト</h3>' +
-        '<button type="button" class="button button-primary" data-copy="' + esc(prompt.id) + '">プロンプトをコピー</button>' +
+        '<div class="prompt-bar-actions">' +
+          '<a class="button button-quiet" href="editor.html?file=' + encodeURIComponent(prompt.file) + '">このプロンプトを編集</a>' +
+          '<button type="button" class="button button-primary" data-copy="' + esc(prompt.id) + '">プロンプトをコピー</button>' +
+        '</div>' +
       '</div>' +
       (prompt.hasPromptSection ? '' :
         '<p class="notice">この Markdown に「## プロンプト」の見出しがないため、本文全体をコピー対象にしています。</p>') +
