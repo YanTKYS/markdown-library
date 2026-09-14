@@ -60,8 +60,7 @@
 }
 
 .field input[type="text"],
-.field textarea,
-.field-inline-input {
+.field textarea {
   width: 100%;
   padding: 9px 12px;
   font-size: 14px;
@@ -72,17 +71,29 @@
   border-radius: var(--radius);
 }
 
-.field-inline-input { margin-top: 8px; }
-
 .field input:focus,
-.field textarea:focus,
-.field-inline-input:focus {
+.field textarea:focus {
   outline: 2px solid var(--accent);
   outline-offset: 1px;
   border-color: var(--accent);
 }
 
 .field textarea { resize: vertical; }
+
+/* 未定義（data/tags.json に無い）カテゴリ・タグの表示。追加はできず、値の保持と削除のみ操作できる。 */
+.chip-unknown {
+  background: #fdf7e3;
+  border-color: #e3d49a;
+  color: #6b5514;
+}
+
+.chip-unknown:hover { background: #fbefc9; border-color: #d8c374; color: #6b5514; }
+
+.field-warning {
+  margin: 8px 0 0;
+  font-size: 12px;
+  color: #6b5514;
+}
 
 #f-prompt {
   font-family: "Consolas", "Menlo", "Yu Gothic", monospace;

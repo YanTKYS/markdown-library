@@ -10,13 +10,16 @@
   var BASE = new URL('../', document.currentScript.src);
   function url(path) { return new URL(path, BASE).href; }
 
-  var OTHER_CATEGORY = '__other__';
-
   var state = {
     categories: [],
     tags: [],
     selectedCategory: '',
-    selectedTags: []
+    selectedTags: [],
+    // 読み込んだ Markdown に data/tags.json 未定義の値があった場合の保持先。
+    // カテゴリ・タグの新規追加はエディタの責務外（将来の管理機能側）とし、
+    // ここでは既存値を消さずに保持し、警告として表示するだけにとどめる。
+    unknownCategory: '',
+    unknownTags: []
   };
 
   var el = {};
@@ -33,12 +36,19 @@
         '" data-category="' + esc(category) + '" aria-pressed="' + (on ? 'true' : 'false') + '">' +
         esc(category) + '</button>';
     });
-    var onOther = state.selectedCategory === OTHER_CATEGORY;
-    html += '<button type="button" class="chip chip-category' + (onOther ? ' is-on' : '') +
-      '" data-category="' + OTHER_CATEGORY + '" aria-pressed="' + (onOther ? 'true' : 'false') + '">その他（自由入力）</button>';
+    if (state.unknownCategory) {
+      html += '<button type="button" class="chip chip-category chip-unknown" data-remove-unknown-category="1" ' +
+        'title="data/tags.json に未定義のカテゴリです。クリックすると削除します。">' +
+        esc(state.unknownCategory) + ' <span aria-hidden="true">×</span></button>';
+    }
 
     el.categoryChips.innerHTML = html;
-    el.categoryCustom.hidden = !onOther;
+
+    el.categoryWarning.hidden = !state.unknownCategory;
+    if (state.unknownCategory) {
+      el.categoryWarning.textContent = '「' + state.unknownCategory + '」は data/tags.json に未定義のカテゴリです。' +
+        '値は保持していますが、正式な分類として追加するには管理側で data/tags.json を更新してください。';
+    }
   }
 
   function renderTagChips() {
@@ -48,11 +58,29 @@
       html += '<button type="button" class="chip chip-tag' + (on ? ' is-on' : '') +
         '" data-tag="' + esc(tag) + '" aria-pressed="' + (on ? 'true' : 'false') + '">#' + esc(tag) + '</button>';
     });
+    state.unknownTags.forEach(function (tag) {
+      html += '<button type="button" class="chip chip-tag chip-unknown" data-remove-unknown-tag="' + esc(tag) + '" ' +
+        'title="data/tags.json に未定義のタグです。クリックすると削除します。">#' + esc(tag) + ' <span aria-hidden="true">×</span></button>';
+    });
     el.tagChips.innerHTML = html;
+
+    el.tagWarning.hidden = state.unknownTags.length === 0;
+    if (state.unknownTags.length) {
+      el.tagWarning.textContent = '未定義のタグ（data/tags.json に無いもの）: ' + state.unknownTags.join('、') + '。' +
+        '値は保持していますが、正式に追加するには管理側で data/tags.json を更新してください。';
+    }
   }
 
   function toggleCategory(category) {
     state.selectedCategory = state.selectedCategory === category ? '' : category;
+    // カテゴリは1つだけのため、定義済みを選んだ時点で未定義の保持値は置き換える。
+    if (state.selectedCategory) state.unknownCategory = '';
+    renderCategoryChips();
+    updatePreview();
+  }
+
+  function removeUnknownCategory() {
+    state.unknownCategory = '';
     renderCategoryChips();
     updatePreview();
   }
@@ -68,24 +96,23 @@
     updatePreview();
   }
 
-  function customTags() {
-    return el.tagsCustom.value.split(',')
-      .map(function (t) { return t.trim(); })
-      .filter(function (t) { return t !== ''; });
+  function removeUnknownTag(tag) {
+    state.unknownTags = state.unknownTags.filter(function (t) { return t !== tag; });
+    renderTagChips();
+    updatePreview();
   }
 
   function allTags() {
     var seen = {};
     var result = [];
-    state.selectedTags.concat(customTags()).forEach(function (tag) {
+    state.selectedTags.concat(state.unknownTags).forEach(function (tag) {
       if (!seen[tag]) { seen[tag] = true; result.push(tag); }
     });
     return result;
   }
 
   function currentCategory() {
-    if (state.selectedCategory === OTHER_CATEGORY) return el.categoryCustom.value.trim();
-    return state.selectedCategory;
+    return state.selectedCategory || state.unknownCategory;
   }
 
   // ---------------------------------------------------------------
@@ -165,9 +192,9 @@
   function resetForm() {
     state.selectedCategory = '';
     state.selectedTags = [];
+    state.unknownCategory = '';
+    state.unknownTags = [];
     el.title.value = '';
-    el.categoryCustom.value = '';
-    el.tagsCustom.value = '';
     el.description.value = '';
     el.usage.value = '';
     el.prompt.value = '';
@@ -188,24 +215,26 @@
     el.usage.value = parsed.usage;
     el.prompt.value = parsed.prompt;
 
+    // 定義済みのカテゴリ・タグはチップで選択状態にする。未定義の値は
+    // 消さずに保持し、警告付きの表示にとどめる（追加は管理側の作業とする）。
     if (category !== '' && state.categories.indexOf(category) !== -1) {
       state.selectedCategory = category;
-      el.categoryCustom.value = '';
+      state.unknownCategory = '';
     } else if (category !== '') {
-      state.selectedCategory = OTHER_CATEGORY;
-      el.categoryCustom.value = category;
+      state.selectedCategory = '';
+      state.unknownCategory = category;
     } else {
       state.selectedCategory = '';
-      el.categoryCustom.value = '';
+      state.unknownCategory = '';
     }
 
     var known = [];
-    var custom = [];
+    var unknown = [];
     tags.forEach(function (tag) {
-      if (state.tags.indexOf(tag) !== -1) known.push(tag); else custom.push(tag);
+      if (state.tags.indexOf(tag) !== -1) known.push(tag); else unknown.push(tag);
     });
     state.selectedTags = known;
-    el.tagsCustom.value = custom.join(', ');
+    state.unknownTags = unknown;
 
     if (fileName) el.filename.value = fileName;
 
@@ -254,18 +283,24 @@
   // ---------------------------------------------------------------
   function bindEvents() {
     el.categoryChips.addEventListener('click', function (event) {
+      var removeButton = event.target.closest('[data-remove-unknown-category]');
+      if (removeButton) { removeUnknownCategory(); return; }
+
       var button = event.target.closest('[data-category]');
       if (!button) return;
       toggleCategory(button.dataset.category);
     });
 
     el.tagChips.addEventListener('click', function (event) {
+      var removeButton = event.target.closest('[data-remove-unknown-tag]');
+      if (removeButton) { removeUnknownTag(removeButton.dataset.removeUnknownTag); return; }
+
       var button = event.target.closest('[data-tag]');
       if (!button) return;
       toggleTag(button.dataset.tag);
     });
 
-    ['title', 'categoryCustom', 'tagsCustom', 'description', 'usage', 'prompt', 'filename'].forEach(function (key) {
+    ['title', 'description', 'usage', 'prompt', 'filename'].forEach(function (key) {
       el[key].addEventListener('input', updatePreview);
     });
 
@@ -292,9 +327,9 @@
   function init() {
     el = {
       categoryChips: document.getElementById('category-chips'),
-      categoryCustom: document.getElementById('f-category-custom'),
+      categoryWarning: document.getElementById('category-warning'),
       tagChips: document.getElementById('tag-chips'),
-      tagsCustom: document.getElementById('f-tags-custom'),
+      tagWarning: document.getElementById('tag-warning'),
       title: document.getElementById('f-title'),
       description: document.getElementById('f-description'),
       usage: document.getElementById('f-usage'),

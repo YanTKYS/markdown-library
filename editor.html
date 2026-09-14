@@ -49,15 +49,15 @@
       </div>
 
       <div class="field">
-        <span class="field-label">カテゴリ <span class="req">必須</span><span class="field-note">1つだけ選べます。無ければ「その他」を選んで入力してください。</span></span>
+        <span class="field-label">カテゴリ <span class="req">必須</span><span class="field-note">data/tags.json 内の定義から1つだけ選べます。分類の追加・変更は管理側の作業です。</span></span>
         <div id="category-chips" class="chips"></div>
-        <input type="text" id="f-category-custom" class="field-inline-input" placeholder="カテゴリ名を入力" hidden autocomplete="off">
+        <p id="category-warning" class="field-warning" hidden></p>
       </div>
 
       <div class="field">
-        <span class="field-label">タグ<span class="field-note">複数選択できます。無いタグは下の欄に追加してください。</span></span>
+        <span class="field-label">タグ<span class="field-note">data/tags.json 内の定義から複数選択できます。分類の追加・変更は管理側の作業です。</span></span>
         <div id="tag-chips" class="chips"></div>
-        <input type="text" id="f-tags-custom" class="field-inline-input" placeholder="追加のタグ（カンマ区切り、任意）" autocomplete="off">
+        <p id="tag-warning" class="field-warning" hidden></p>
       </div>
 
       <div class="field">
