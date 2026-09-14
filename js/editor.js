@@ -144,14 +144,19 @@
     'LPT1', 'LPT2', 'LPT3', 'LPT4', 'LPT5', 'LPT6', 'LPT7', 'LPT8', 'LPT9'
   ];
 
-  // Unicode 正規化した保存ファイル名を返す（先頭末尾の空白は除く）。
+  // Unicode 正規化した保存ファイル名を返す。
+  // 先頭・末尾の空白は検証対象とするため、ここでは trim しない。
   function normalizedFilename() {
-    return String(el.filename.value || '').trim().normalize('NFC');
+    return String(el.filename.value || '').normalize('NFC');
   }
 
   // 検証エラーがあればメッセージ、問題なければ空文字を返す。
   function filenameError(name) {
-    if (name === '') return 'ファイル名を入力してください。';
+    if (name.trim() === '') return 'ファイル名を入力してください。';
+
+    if (/^\s|\s$/.test(name)) {
+      return 'ファイル名の先頭・末尾に空白を含めないでください。';
+    }
 
     if (!/\.md$/.test(name)) {
       return 'ファイル名の末尾は半角の「.md」にしてください。';
