@@ -43,21 +43,25 @@
   function parsePrompt(fileName, text) {
     var parsed = PromptParser.parse(text);
     var meta = parsed.meta;
-    var title = meta.title || fileName.replace(/\.md$/i, '');
+    // front matter の値は toText で必ず文字列にそろえる。
+    // 値を書き忘れた行（「description:」だけ等）は配列になるため、そのまま使うと表示時に落ちる。
+    var title = PromptParser.toText(meta.title) || fileName.replace(/\.md$/i, '');
+    var category = PromptParser.toText(meta.category) || '未分類';
+    var description = PromptParser.toText(meta.description);
     var tags = PromptParser.toArray(meta.tags);
 
     return {
       id: fileName.replace(/\.md$/i, ''),
       file: fileName,
       title: title,
-      category: (meta.category || '未分類').trim(),
+      category: category,
       tags: tags,
-      description: meta.description || '',
+      description: description,
       usage: parsed.usage,
       prompt: parsed.prompt,
       hasPromptSection: parsed.hasPromptSection,
       // 検索対象: タイトル / 説明 / カテゴリ / タグ / 本文
-      searchText: normalize([title, meta.description || '', meta.category || '', tags.join(' '), parsed.rawBody].join('\n'))
+      searchText: normalize([title, description, category, tags.join(' '), parsed.rawBody].join('\n'))
     };
   }
 
@@ -100,10 +104,6 @@
   // 描画
   // ---------------------------------------------------------------
   var esc = MiniMarkdown.escapeHtml;
-
-  function tagChipHtml(tag, extraClass) {
-    return '<span class="tag ' + (extraClass || '') + '">#' + esc(tag) + '</span>';
-  }
 
   function renderCategoryFilter() {
     var html = '<button type="button" class="chip chip-category' + (state.category === '' ? ' is-on' : '') +
@@ -305,15 +305,25 @@
     });
   }
 
-  var copyResetTimer = null;
+  // 「コピーしました」と表示中のボタン。2秒後、または次のコピー時に元の表示へ戻す。
+  var activeCopy = null;
+
+  function restoreCopyButton() {
+    if (!activeCopy) return;
+    window.clearTimeout(activeCopy.timer);
+    activeCopy.button.textContent = activeCopy.label;
+    activeCopy.button.classList.remove('is-done');
+    activeCopy = null;
+  }
 
   function handleCopy(button, id) {
     var prompt = findPrompt(id);
     if (!prompt) return;
 
-    var original = button.dataset.label || button.textContent;
-    button.dataset.label = original;
-    window.clearTimeout(copyResetTimer);
+    // 続けて別のプロンプトをコピーしたとき、前のボタンが
+    // 「コピーしました」のまま残らないように先に戻す。
+    restoreCopyButton();
+    var label = button.textContent;
 
     copyText(prompt.prompt).then(function () {
       button.textContent = 'コピーしました';
@@ -323,10 +333,11 @@
       button.textContent = 'コピーできません';
       el.live.textContent = 'コピーに失敗しました。プロンプト本文を選択して手動でコピーしてください。';
     }).then(function () {
-      copyResetTimer = window.setTimeout(function () {
-        button.textContent = original;
-        button.classList.remove('is-done');
-      }, 2000);
+      activeCopy = {
+        button: button,
+        label: label,
+        timer: window.setTimeout(restoreCopyButton, 2000)
+      };
     });
   }
 
@@ -466,12 +477,13 @@
   }
 
   function collectTags(defined) {
+    var list = Array.isArray(defined) ? defined : [];
     var seen = {};
     var ordered = [];
 
-    defined.forEach(function (tag) { seen[tag] = true; });
+    list.forEach(function (tag) { seen[tag] = true; });
     // 定義済みタグのうち、実際に使われているものだけを表示する。
-    defined.forEach(function (tag) {
+    list.forEach(function (tag) {
       if (state.prompts.some(function (p) { return p.tags.indexOf(tag) !== -1; })) ordered.push(tag);
     });
     // tags.json に未登録のタグも取りこぼさず末尾に出す。
@@ -484,11 +496,48 @@
   }
 
   function collectCategories(defined) {
-    var ordered = defined.slice();
+    var ordered = Array.isArray(defined) ? defined.slice() : [];
     state.prompts.forEach(function (p) {
       if (ordered.indexOf(p.category) === -1) ordered.push(p.category);
     });
     return ordered;
+  }
+
+  /*
+   * manifest.json に並んだ Markdown を読み込む。
+   * 読めなかったファイルは読み飛ばし、ファイル名だけを返す。
+   * （manifest.json への登録漏れやファイル名の打ち間違いで、
+   * 　ライブラリ全体が表示できなくなるのを避けるため）
+   */
+  function loadPrompts(files) {
+    var failed = [];
+
+    return Promise.all(files.map(function (file) {
+      // ファイル名は1つのパスセグメントとしてエンコードする。
+      // 「#」を含む名前をそのまま連結すると、URL の断片指定として扱われ取得できない。
+      return fetchText('prompts/' + encodeURIComponent(file))
+        .then(function (text) { return parsePrompt(file, text); })
+        .catch(function () { failed.push(file); return null; });
+    })).then(function (results) {
+      return {
+        prompts: results.filter(function (p) { return p !== null; }),
+        failed: failed
+      };
+    });
+  }
+
+  // カテゴリ・タグの定義は絞り込みの並び順を決めるだけなので、
+  // 読めなくても（JSON の書き間違いなど）一覧の表示は続ける。
+  function loadDefinitions() {
+    return fetchJson('data/tags.json').catch(function () { return {}; });
+  }
+
+  // 読み飛ばしたファイルを知らせる。追加した職員がその場で気づけるようにする。
+  function showSkipped(failed) {
+    if (failed.length === 0) return;
+    el.skipped.textContent = '次のファイルを読み込めませんでした: ' + failed.join('、') +
+      '（prompts/ フォルダにファイルがあるか、data/manifest.json のファイル名が正しいか確認してください）';
+    el.skipped.hidden = false;
   }
 
   function init() {
@@ -502,33 +551,34 @@
       listView: document.getElementById('list-view'),
       detail: document.getElementById('detail-view'),
       status: document.getElementById('status'),
+      skipped: document.getElementById('skipped'),
       live: document.getElementById('live-region'),
       app: document.getElementById('app')
     };
 
-    Promise.all([fetchJson('data/manifest.json'), fetchJson('data/tags.json')])
-      .then(function (results) {
-        var manifest = results[0];
-        var definitions = results[1] || {};
+    fetchJson('data/manifest.json')
+      .then(function (manifest) {
         var files = Array.isArray(manifest && manifest.prompts) ? manifest.prompts : [];
-
         if (files.length === 0) {
           throw new Error('data/manifest.json に prompts が1件も登録されていません。');
         }
-
-        return Promise.all(files.map(function (file) {
-          return fetchText('prompts/' + file).then(function (text) {
-            return parsePrompt(file, text);
-          });
-        })).then(function (prompts) {
-          state.prompts = prompts;
-          state.categories = collectCategories(Array.isArray(definitions.categories) ? definitions.categories : []);
-          state.tags = collectTags(Array.isArray(definitions.tags) ? definitions.tags : []);
-        });
+        return Promise.all([loadPrompts(files), loadDefinitions()]);
       })
-      .then(function () {
+      .then(function (results) {
+        var loaded = results[0];
+        var definitions = results[1];
+
+        if (loaded.prompts.length === 0) {
+          throw new Error('prompts/ フォルダから Markdown を1件も読み込めませんでした。');
+        }
+
+        state.prompts = loaded.prompts;
+        state.categories = collectCategories(definitions.categories);
+        state.tags = collectTags(definitions.tags);
+
         el.status.hidden = true;
         el.app.hidden = false;
+        showSkipped(loaded.failed);
         bindEvents();
         route();
       })

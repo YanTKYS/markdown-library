@@ -15,7 +15,11 @@ var PromptParser = (function () {
     if (trimmed.length >= 2) {
       var first = trimmed.charAt(0);
       var last = trimmed.charAt(trimmed.length - 1);
-      if ((first === '"' && last === '"') || (first === "'" && last === "'")) {
+      // 二重引用符の中の \" \\ は buildMarkdown が付けたエスケープなので元に戻す。
+      if (first === '"' && last === '"') {
+        return trimmed.slice(1, -1).replace(/\\(["\\])/g, '$1');
+      }
+      if (first === "'" && last === "'") {
         return trimmed.slice(1, -1);
       }
     }
@@ -115,6 +119,16 @@ var PromptParser = (function () {
     return text;
   }
 
+  /*
+   * front matter の値を文字列として取り出す。
+   * 「description:」のように値を書き忘れた行はリストの開始とみなされて配列になる。
+   * そのまま画面へ渡すと表示時にエラーになるため、ここで必ず文字列へそろえる。
+   */
+  function toText(value) {
+    if (Array.isArray(value)) return value.join(' ').trim();
+    return value == null ? '' : String(value).trim();
+  }
+
   function toArray(value) {
     if (Array.isArray(value)) return value.filter(function (v) { return String(v).trim() !== ''; });
     if (value == null || String(value).trim() === '') return [];
@@ -123,7 +137,7 @@ var PromptParser = (function () {
 
   // テキスト全体を解析する。BOM・改行コードの正規化もここで行う。
   function parse(rawText) {
-    var normalized = String(rawText || '').replace(/^﻿/, '').replace(/\r\n?/g, '\n');
+    var normalized = String(rawText || '').replace(/^\uFEFF/, '').replace(/\r\n?/g, '\n');
     var fm = parseFrontMatter(normalized);
     var body = parseBody(fm.body);
 
@@ -147,9 +161,10 @@ var PromptParser = (function () {
   // Markdown の生成（解析の逆方向）
   // ---------------------------------------------------------------
 
-  // front matter の値として、そのまま書くと構文を壊す可能性がある場合に引用符で囲む。
+  // front matter の値として、そのまま書くと構文を壊す場合や、
+  // 読み戻したときに値が変わってしまう場合（引用符で始まる値）は引用符で囲む。
   function needsQuote(value) {
-    return value === '' || value !== value.trim() || /[:#]/.test(value);
+    return value === '' || value !== value.trim() || /[:#]/.test(value) || /^["']/.test(value);
   }
 
   function quoteScalar(value) {
@@ -191,13 +206,11 @@ var PromptParser = (function () {
     return fm + body;
   }
 
+  // 外から使うのはこの4つだけ。ほかは内部の補助関数として閉じておく。
   return {
-    unquote: unquote,
-    parseFrontMatter: parseFrontMatter,
-    parseBody: parseBody,
-    stripOuterFence: stripOuterFence,
-    toArray: toArray,
     parse: parse,
+    toText: toText,
+    toArray: toArray,
     buildMarkdown: buildMarkdown
   };
 })();
