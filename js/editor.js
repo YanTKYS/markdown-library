@@ -224,7 +224,10 @@
 
     el.loadStatus.textContent = name + ' を読み込んでいます…';
 
-    fetch(url('prompts/' + name), { cache: 'no-cache' }).then(function (response) {
+    // ファイル名を1つのパスセグメントとしてエンコードする。
+    // 今回の仕様では "#" "%" 等もファイル名に使えるため、そのまま連結すると
+    // URL のフラグメントやパーセントエンコーディングとして誤解釈されうる。
+    fetch(url('prompts/' + encodeURIComponent(name)), { cache: 'no-cache' }).then(function (response) {
       if (!response.ok) throw new Error('HTTP ' + response.status);
       return response.text();
     }).then(function (text) {
