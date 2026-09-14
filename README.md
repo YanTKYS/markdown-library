@@ -18,17 +18,22 @@
 
 ```text
 /
-├─ index.html          画面（1ページのみ）
+├─ index.html          画面（一覧・検索・詳細表示）
+├─ editor.html          プロンプトエディタ（作成・編集支援。下記参照）
 ├─ web.config          IIS 用の MIME 設定
 ├─ prompts/            プロンプト本体（Markdown）
 │  └─ meeting-minutes.md など
 ├─ data/
 │  ├─ manifest.json    読み込む Markdown の一覧
 │  └─ tags.json        カテゴリとタグの定義
-├─ css/style.css
+├─ css/
+│  ├─ style.css        画面共通スタイル
+│  └─ editor.css       エディタ専用スタイル
 └─ js/
+   ├─ prompt-parser.js Markdown の解析・生成（app.js・editor.html 共通）
    ├─ app.js           一覧・検索・詳細表示
-   └─ markdown.js      「使い方」欄の簡易 Markdown 描画
+   ├─ markdown.js      「使い方」欄の簡易 Markdown 描画
+   └─ editor.js         プロンプトエディタの動作
 ```
 
 ---
@@ -73,6 +78,11 @@ python -m http.server 8000
 ---
 
 ## プロンプトの追加方法
+
+Markdown を手書きする方法（下記）のほか、`editor.html`（プロンプトエディタ）を使うと、
+フォーム入力から仕様に合った Markdown を生成できます。生成した Markdown は
+ダウンロードするだけで、GitHub や公開サーバへの反映は行いません。
+ダウンロード後は、下記の手順と同様に `prompts/` へ配置し `data/manifest.json` に登録してください。
 
 ### 1. Markdown ファイルを作る
 

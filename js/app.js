@@ -38,135 +38,13 @@
     return normalized === '' ? [] : normalized.split(/\s+/);
   }
 
-  // ---------------------------------------------------------------
-  // front matter の解析
-  // YAML 全体ではなく「key: value」と「- 項目」のリストだけを扱う。
-  // ---------------------------------------------------------------
-  function unquote(value) {
-    var trimmed = value.trim();
-    if (trimmed.length >= 2) {
-      var first = trimmed.charAt(0);
-      var last = trimmed.charAt(trimmed.length - 1);
-      if ((first === '"' && last === '"') || (first === "'" && last === "'")) {
-        return trimmed.slice(1, -1);
-      }
-    }
-    return trimmed;
-  }
-
-  function parseFrontMatter(text) {
-    var match = /^---[ \t]*\n([\s\S]*?)\n---[ \t]*(?:\n|$)/.exec(text);
-    if (!match) return { meta: {}, body: text };
-
-    var meta = {};
-    var listKey = null;
-
-    match[1].split('\n').forEach(function (line) {
-      if (line.trim() === '' || /^\s*#/.test(line)) return;
-
-      var item = /^\s*-\s+(.*)$/.exec(line);
-      if (item && listKey) {
-        meta[listKey].push(unquote(item[1]));
-        return;
-      }
-
-      var pair = /^([A-Za-z0-9_-]+)\s*:\s*(.*)$/.exec(line);
-      if (!pair) return;
-
-      var key = pair[1];
-      var value = pair[2].trim();
-
-      if (value === '') {
-        // 次行以降が「- 項目」形式のリスト
-        listKey = key;
-        meta[key] = [];
-      } else if (/^\[.*\]$/.test(value)) {
-        // インライン配列 tags: [a, b]
-        listKey = null;
-        meta[key] = value.slice(1, -1).split(',')
-          .map(unquote)
-          .filter(function (v) { return v !== ''; });
-      } else {
-        listKey = null;
-        meta[key] = unquote(value);
-      }
-    });
-
-    return { meta: meta, body: text.slice(match[0].length) };
-  }
-
-  // 「## 見出し」の行なら見出し文字列を返す。「###」以下は本文の一部として扱う。
-  function headingText(line) {
-    var match = /^##[ \t]+(.+?)[ \t]*$/.exec(line);
-    return match ? match[1] : null;
-  }
-
-  function findHeading(lines, name) {
-    for (var i = 0; i < lines.length; i++) {
-      if (headingText(lines[i]) === name) return i;
-    }
-    return -1;
-  }
-
-  /*
-   * 本文から「使い方」と「プロンプト」を取り出す。
-   * プロンプトは「## プロンプト」の次の行から Markdown 末尾までとする。
-   * プロンプト自体が「## 前提条件」「## 出力形式」のように見出しで構造化されて
-   * いても欠けないようにするため、途中の見出しでは区切らない。
-   * その代わり「使い方」は「## プロンプト」より前に置く決まりとする。
-   */
-  function parseBody(body) {
-    var lines = body.split('\n');
-    var promptIndex = findHeading(lines, 'プロンプト');
-
-    var prompt = promptIndex === -1 ? '' : lines.slice(promptIndex + 1).join('\n').trim();
-    var head = promptIndex === -1 ? lines : lines.slice(0, promptIndex);
-
-    var usage = '';
-    var usageIndex = findHeading(head, '使い方');
-    if (usageIndex !== -1) {
-      var rest = head.slice(usageIndex + 1);
-      var end = rest.length;
-      for (var i = 0; i < rest.length; i++) {
-        if (headingText(rest[i]) !== null) { end = i; break; }
-      }
-      usage = rest.slice(0, end).join('\n').trim();
-    }
-
-    return { usage: usage, prompt: prompt };
-  }
-
-  // プロンプト全体がコードフェンスで囲まれている場合だけ、その囲みを外す。
-  // 本文中にもフェンスがある場合は構造を壊すため、何もしない。
-  function stripOuterFence(text) {
-    var lines = text.split('\n');
-    var fences = lines.filter(function (line) { return /^```/.test(line); }).length;
-    if (fences === 2 && /^```/.test(lines[0]) && /^```\s*$/.test(lines[lines.length - 1])) {
-      return lines.slice(1, -1).join('\n').trim();
-    }
-    return text;
-  }
-
-  function toArray(value) {
-    if (Array.isArray(value)) return value.filter(function (v) { return String(v).trim() !== ''; });
-    if (value == null || String(value).trim() === '') return [];
-    return [String(value).trim()];
-  }
-
+  // front matter・本文の解析は js/prompt-parser.js（PromptParser）に共通化している。
+  // editor.html（作成・編集）と同じロジックを使うことで、仕様のズレを防ぐ。
   function parsePrompt(fileName, text) {
-    var parsed = parseFrontMatter(text.replace(/^\uFEFF/, '').replace(/\r\n?/g, '\n'));
+    var parsed = PromptParser.parse(text);
     var meta = parsed.meta;
-    var body = parseBody(parsed.body);
-
-    var promptBody = body.prompt;
-    var hasPromptSection = promptBody !== '';
-    if (!hasPromptSection) {
-      // 「## プロンプト」が無い場合は、H1 見出しを除いた本文全体をコピー対象とする。
-      promptBody = parsed.body.replace(/^\s*#[ \t]+.*\n/, '').trim();
-    }
-
     var title = meta.title || fileName.replace(/\.md$/i, '');
-    var tags = toArray(meta.tags);
+    var tags = PromptParser.toArray(meta.tags);
 
     return {
       id: fileName.replace(/\.md$/i, ''),
@@ -175,11 +53,11 @@
       category: (meta.category || '未分類').trim(),
       tags: tags,
       description: meta.description || '',
-      usage: body.usage,
-      prompt: stripOuterFence(promptBody),
-      hasPromptSection: hasPromptSection,
+      usage: parsed.usage,
+      prompt: parsed.prompt,
+      hasPromptSection: parsed.hasPromptSection,
       // 検索対象: タイトル / 説明 / カテゴリ / タグ / 本文
-      searchText: normalize([title, meta.description || '', meta.category || '', tags.join(' '), parsed.body].join('\n'))
+      searchText: normalize([title, meta.description || '', meta.category || '', tags.join(' '), parsed.rawBody].join('\n'))
     };
   }
 
