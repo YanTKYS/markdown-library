@@ -129,8 +129,75 @@
     };
   }
 
+  // ---------------------------------------------------------------
+  // 保存ファイル名の検証
+  // 日本語を含む Windows / IIS で安全なファイル名を許可する。
+  // ".md" を除いた部分は、将来 history/<ファイル名>/ のようにディレクトリ名
+  // としても使う予定のため、ディレクトリ名としても安全な範囲で検証する。
+  // ---------------------------------------------------------------
+  var FILENAME_MAX_LENGTH = 150; // Windows の1階層あたりの上限(255)より十分小さく、history/ 配下に余裕を残す
+  var FORBIDDEN_CHARS_REGEX = /[\\/:*?"<>|]/;
+  var CONTROL_CHARS_REGEX = /[\x00-\x1f\x7f-\x9f]/;
+  var RESERVED_NAMES = [
+    'CON', 'PRN', 'AUX', 'NUL',
+    'COM1', 'COM2', 'COM3', 'COM4', 'COM5', 'COM6', 'COM7', 'COM8', 'COM9',
+    'LPT1', 'LPT2', 'LPT3', 'LPT4', 'LPT5', 'LPT6', 'LPT7', 'LPT8', 'LPT9'
+  ];
+
+  // Unicode 正規化した保存ファイル名を返す。
+  // 先頭・末尾の空白は検証対象とするため、ここでは trim しない。
+  function normalizedFilename() {
+    return String(el.filename.value || '').normalize('NFC');
+  }
+
+  // 検証エラーがあればメッセージ、問題なければ空文字を返す。
+  function filenameError(name) {
+    if (name.trim() === '') return 'ファイル名を入力してください。';
+
+    if (/^\s|\s$/.test(name)) {
+      return 'ファイル名の先頭・末尾に空白を含めないでください。';
+    }
+
+    if (!/\.md$/.test(name)) {
+      return 'ファイル名の末尾は半角の「.md」にしてください。';
+    }
+
+    var base = name.slice(0, -3);
+    if (base === '') {
+      return '「.md」の前にファイル名を入力してください。';
+    }
+
+    var length = Array.from(name).length;
+    if (length > FILENAME_MAX_LENGTH) {
+      return 'ファイル名が長すぎます（' + length + '文字）。' + FILENAME_MAX_LENGTH + '文字以内にしてください。';
+    }
+
+    if (FORBIDDEN_CHARS_REGEX.test(base)) {
+      return 'ファイル名に使用できない記号が含まれています（\\ / : * ? " < > | は使用できません）。';
+    }
+
+    if (CONTROL_CHARS_REGEX.test(base)) {
+      return 'ファイル名に制御文字が含まれています。';
+    }
+
+    if (base === '.' || base === '..') {
+      return '「.」や「..」だけのファイル名は使用できません。';
+    }
+
+    if (/[ .]$/.test(base)) {
+      return 'ファイル名の末尾にピリオドや空白は使用できません。';
+    }
+
+    var stem = base.split('.')[0].toUpperCase();
+    if (RESERVED_NAMES.indexOf(stem) !== -1) {
+      return '「' + stem + '」は Windows の予約名のため使用できません（CON, PRN, AUX, NUL, COM1〜9, LPT1〜9 など）。';
+    }
+
+    return '';
+  }
+
   function validateFilename(name) {
-    return /^[a-z0-9-]+\.md$/.test(name);
+    return filenameError(name) === '';
   }
 
   function renderPreviewDetail(fields) {
@@ -163,11 +230,12 @@
 
     renderPreviewDetail(fields);
 
-    var filename = el.filename.value.trim();
-    var filenameOk = filename !== '' && validateFilename(filename);
+    var filename = normalizedFilename();
+    var errorMessage = filenameError(filename);
+    var filenameOk = filename !== '' && errorMessage === '';
 
-    if (filename !== '' && !filenameOk) {
-      el.filenameError.textContent = 'ファイル名は半角英小文字・数字・ハイフンのみで、末尾は「.md」にしてください。';
+    if (filename !== '' && errorMessage !== '') {
+      el.filenameError.textContent = errorMessage;
       el.filenameError.hidden = false;
     } else {
       el.filenameError.hidden = true;
@@ -264,7 +332,7 @@
   // 保存（ダウンロードのみ。GitHub / IIS への反映は行わない）
   // ---------------------------------------------------------------
   function downloadMarkdown() {
-    var filename = el.filename.value.trim();
+    var filename = normalizedFilename();
     if (!validateFilename(filename)) return;
 
     var blob = new Blob([el.rawOutput.value], { type: 'text/markdown;charset=utf-8' });
