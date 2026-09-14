@@ -315,6 +315,13 @@
     el.prompt.value = '';
     el.filename.value = '';
     el.loadStatus.textContent = '';
+
+    // URL から ?file=... を外す。残したままだと、画面を再読み込みしたときに
+    // 元のプロンプトが読み込み直され、入力中の内容が消えてしまう。
+    if (window.location.search) {
+      window.history.replaceState(null, '', window.location.pathname);
+    }
+
     renderCategoryChips();
     renderTagChips();
     updatePreview();
@@ -323,10 +330,10 @@
   function applyParsed(parsed, fileName) {
     var meta = parsed.meta;
     var tags = PromptParser.toArray(meta.tags);
-    var category = String(meta.category || '').trim();
+    var category = PromptParser.toText(meta.category);
 
-    el.title.value = meta.title || '';
-    el.description.value = meta.description || '';
+    el.title.value = PromptParser.toText(meta.title);
+    el.description.value = PromptParser.toText(meta.description);
     el.usage.value = parsed.usage;
     el.prompt.value = parsed.prompt;
 
