@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>プロンプトエディタ | プロンプトライブラリ</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 16 16%27%3E%3Crect width=%2716%27 height=%2716%27 rx=%273%27 fill=%27%2314548c%27/%3E%3Cpath d=%27M4 5h8M4 8h8M4 11h5%27 stroke=%27%23fff%27 stroke-width=%271.5%27 stroke-linecap=%27round%27/%3E%3C/svg%3E">
+<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/editor.css">
+</head>
+<body>
+
+<header class="site-header">
+  <div class="container">
+    <a class="back-link" href="index.html">← プロンプトライブラリに戻る</a>
+    <h1 class="site-title">プロンプトエディタ</h1>
+    <p class="site-lead">Markdown を直接書かずに、プロンプトの作成・編集を行うための支援ツールです。</p>
+  </div>
+</header>
+
+<main class="container editor-main">
+
+  <div class="notice">
+    このツールは Markdown の作成・編集を支援するだけです。GitHub や公開サーバへの反映は行いません。
+    生成した Markdown をダウンロードし、<code>prompts/</code> フォルダへ配置したうえで、
+    <code>data/manifest.json</code> にファイル名を登録してください（詳しい手順は README.md を参照）。
+  </div>
+
+  <section class="editor-section">
+    <h2 class="editor-section-title">読み込み</h2>
+    <div class="load-row">
+      <button type="button" id="btn-new" class="button button-quiet">新規作成</button>
+      <label class="button button-quiet file-label">
+        既存の .md ファイルを開く
+        <input type="file" id="file-input" accept=".md,.markdown,text/markdown" hidden>
+      </label>
+      <span id="load-status" class="load-status" role="status"></span>
+    </div>
+  </section>
+
+  <div class="editor-grid">
+
+    <section class="editor-section form-section">
+      <h2 class="editor-section-title">編集</h2>
+
+      <div class="field">
+        <label for="f-title">タイトル <span class="req">必須</span></label>
+        <input type="text" id="f-title" maxlength="60" autocomplete="off">
+      </div>
+
+      <div class="field">
+        <span class="field-label">カテゴリ <span class="req">必須</span><span class="field-note">1つだけ選べます。無ければ「その他」を選んで入力してください。</span></span>
+        <div id="category-chips" class="chips"></div>
+        <input type="text" id="f-category-custom" class="field-inline-input" placeholder="カテゴリ名を入力" hidden autocomplete="off">
+      </div>
+
+      <div class="field">
+        <span class="field-label">タグ<span class="field-note">複数選択できます。無いタグは下の欄に追加してください。</span></span>
+        <div id="tag-chips" class="chips"></div>
+        <input type="text" id="f-tags-custom" class="field-inline-input" placeholder="追加のタグ（カンマ区切り、任意）" autocomplete="off">
+      </div>
+
+      <div class="field">
+        <label for="f-description">説明 <span class="req">必須</span><span class="field-note">一覧カードに出る1行説明。40字程度まで。</span></label>
+        <input type="text" id="f-description" maxlength="80" autocomplete="off">
+      </div>
+
+      <div class="field">
+        <label for="f-usage">使い方<span class="field-note">段落・箇条書き（<code>-</code> / <code>1.</code>）が使えます。</span></label>
+        <textarea id="f-usage" rows="4"></textarea>
+      </div>
+
+      <div class="field">
+        <label for="f-prompt">プロンプト本文 <span class="req">必須</span><span class="field-note">生成AIに実際に入力する文面です。見出し（##）で構造化しても構いません。</span></label>
+        <textarea id="f-prompt" rows="14"></textarea>
+      </div>
+
+      <div class="field">
+        <label for="f-filename">保存ファイル名 <span class="req">必須</span><span class="field-note">半角英小文字・数字・ハイフンのみ。例: budget-summary.md</span></label>
+        <input type="text" id="f-filename" placeholder="例: budget-summary.md" autocomplete="off">
+        <p id="filename-error" class="field-error" hidden></p>
+      </div>
+    </section>
+
+    <section class="editor-section preview-section">
+      <h2 class="editor-section-title">プレビュー</h2>
+      <article id="preview-detail" class="detail preview-detail"></article>
+
+      <h3 class="raw-heading">生成される Markdown</h3>
+      <textarea id="raw-output" class="raw-output" readonly rows="16" aria-label="生成される Markdown"></textarea>
+
+      <div class="save-row">
+        <button type="button" id="btn-download" class="button button-primary" disabled>.md ファイルをダウンロード</button>
+      </div>
+
+      <div id="manifest-hint" class="notice manifest-hint" hidden>
+        保存後、<code>prompts/</code> フォルダへ配置し、<code>data/manifest.json</code> の <code>prompts</code> 配列に次の行を追加してください。
+        <pre class="manifest-snippet" id="manifest-snippet"></pre>
+      </div>
+    </section>
+
+  </div>
+
+</main>
+
+<script src="js/prompt-parser.js"></script>
+<script src="js/markdown.js"></script>
+<script src="js/editor.js"></script>
+</body>
+</html>

@@ -64,6 +64,8 @@ body {
 }
 
 .site-footer p { margin: 0; }
+.footer-editor-link { margin-top: 4px; }
+.footer-editor-link a { color: var(--ink-soft); }
 
 kbd {
   border: 1px solid var(--line);
