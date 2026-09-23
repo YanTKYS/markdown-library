@@ -110,9 +110,10 @@ var EntryParser = (function () {
   // ---------------------------------------------------------------
 
   // front matter の値として、そのまま書くと構文を壊す場合や、
-  // 読み戻したときに値が変わってしまう場合（引用符で始まる値）は引用符で囲む。
+  // 読み戻したときに値が変わってしまう場合は引用符で囲む。
+  // （引用符で始まる値は引用符が外れ、「[様式]」のような値は配列と誤認される）
   function needsQuote(value) {
-    return value === '' || value !== value.trim() || /[:#]/.test(value) || /^["']/.test(value);
+    return value === '' || value !== value.trim() || /[:#]/.test(value) || /^["'\[]/.test(value);
   }
 
   function quoteScalar(value) {

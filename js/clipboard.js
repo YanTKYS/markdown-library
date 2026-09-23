@@ -6,23 +6,27 @@
 var CopyHelper = (function () {
   'use strict';
 
+  // 旧方式: 画面外に置いたテキストエリアを選択してコピーする。
+  function legacyCopy(text) {
+    var area = document.createElement('textarea');
+    area.value = text;
+    area.setAttribute('readonly', '');
+    area.style.position = 'fixed';
+    area.style.top = '-1000px';
+    document.body.appendChild(area);
+    area.select();
+    var ok = false;
+    try { ok = document.execCommand('copy'); } catch (e) { ok = false; }
+    document.body.removeChild(area);
+    return ok ? Promise.resolve() : Promise.reject(new Error('copy failed'));
+  }
+
   function copyText(text) {
     if (navigator.clipboard && window.isSecureContext) {
-      return navigator.clipboard.writeText(text);
+      // ブラウザの設定・ポリシーで Clipboard API が拒否された場合も旧方式で再試行する。
+      return navigator.clipboard.writeText(text).catch(function () { return legacyCopy(text); });
     }
-    return new Promise(function (resolve, reject) {
-      var area = document.createElement('textarea');
-      area.value = text;
-      area.setAttribute('readonly', '');
-      area.style.position = 'fixed';
-      area.style.top = '-1000px';
-      document.body.appendChild(area);
-      area.select();
-      var ok = false;
-      try { ok = document.execCommand('copy'); } catch (e) { ok = false; }
-      document.body.removeChild(area);
-      ok ? resolve() : reject(new Error('copy failed'));
-    });
+    return legacyCopy(text);
   }
 
   // 「コピーしました」と表示中のボタン。2秒後、または次のコピー時に元の表示へ戻す。
