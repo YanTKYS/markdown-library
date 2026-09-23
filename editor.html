@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>プロンプトエディタ | プロンプトライブラリ</title>
+<title>Markdownエディタ | Markdown Library</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 16 16%27%3E%3Crect width=%2716%27 height=%2716%27 rx=%273%27 fill=%27%2314548c%27/%3E%3Cpath d=%27M4 5h8M4 8h8M4 11h5%27 stroke=%27%23fff%27 stroke-width=%271.5%27 stroke-linecap=%27round%27/%3E%3C/svg%3E">
 <link rel="stylesheet" href="css/style.css">
 <link rel="stylesheet" href="css/editor.css">
@@ -12,9 +12,9 @@
 
 <header class="site-header">
   <div class="container">
-    <a class="back-link" href="index.html">← プロンプトライブラリに戻る</a>
-    <h1 class="site-title">プロンプトエディタ</h1>
-    <p class="site-lead">Markdown を直接書かずに、プロンプトの作成・編集を行うための支援ツールです。</p>
+    <a class="back-link" href="index.html">← Markdown Library に戻る</a>
+    <h1 class="site-title">Markdownエディタ</h1>
+    <p class="site-lead">タイトルやカテゴリなどの設定（front matter）を手書きせずに、Markdown の作成・編集を行うための支援ツールです。</p>
   </div>
 </header>
 
@@ -22,13 +22,13 @@
 
   <div class="notice">
     このツールは Markdown の作成・編集を支援するだけです。GitHub や公開サーバへの反映は行いません。
-    生成した Markdown をダウンロードし、<code>prompts/</code> フォルダへ配置したうえで、
+    生成した Markdown をダウンロードし、<code>entries/</code> フォルダへ配置したうえで、
     <code>data/manifest.json</code> にファイル名を登録してください（詳しい手順は README.md を参照）。
   </div>
 
   <section class="editor-section">
     <div class="load-row">
-      <button type="button" id="btn-new" class="button button-quiet">新しいプロンプトを作成</button>
+      <button type="button" id="btn-new" class="button button-quiet">新しい Markdown を作成</button>
       <span id="load-status" class="load-status" role="status"></span>
     </div>
     <details class="aux-load">
@@ -68,13 +68,8 @@
       </div>
 
       <div class="field">
-        <label for="f-usage">使い方<span class="field-note">段落・箇条書き（<code>-</code> / <code>1.</code>）が使えます。</span></label>
-        <textarea id="f-usage" rows="4"></textarea>
-      </div>
-
-      <div class="field">
-        <label for="f-prompt">プロンプト本文 <span class="req">必須</span><span class="field-note">生成AIに実際に入力する文面です。見出し（##）で構造化しても構いません。</span></label>
-        <textarea id="f-prompt" rows="14"></textarea>
+        <label for="f-body">Markdown本文 <span class="req">必須</span><span class="field-note">入力した内容がそのまま本文として保存されます。見出し（<code>#</code>）・箇条書き（<code>-</code> / <code>1.</code>）・太字（<code>**</code>）・コード（<code>`</code>）・コードブロック（<code>```言語名</code>）が使えます。コードブロックは閲覧画面でブロックごとにコピーできるため、生成AIへ渡す文面やPlantUMLなどのコードは <code>```text</code> や <code>```plantuml</code> で囲んでください。</span></label>
+        <textarea id="f-body" rows="22" spellcheck="false" placeholder="## 使い方&#10;&#10;説明を書きます。&#10;&#10;```text&#10;コピーして使う文面やコード&#10;```"></textarea>
       </div>
 
       <div class="field">
@@ -96,7 +91,7 @@
       </div>
 
       <div id="manifest-hint" class="notice manifest-hint" hidden>
-        保存後、<code>prompts/</code> フォルダへ配置し、<code>data/manifest.json</code> の <code>prompts</code> 配列に次の行を追加してください。
+        保存後、<code>entries/</code> フォルダへ配置し、<code>data/manifest.json</code> の <code>entries</code> 配列に次の行を追加してください。
         <pre class="manifest-snippet" id="manifest-snippet"></pre>
       </div>
     </section>
@@ -105,8 +100,9 @@
 
 </main>
 
-<script src="js/prompt-parser.js"></script>
+<script src="js/entry-parser.js"></script>
 <script src="js/markdown.js"></script>
+<script src="js/clipboard.js"></script>
 <script src="js/editor.js"></script>
 </body>
 </html>

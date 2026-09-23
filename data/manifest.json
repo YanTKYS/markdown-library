@@ -1,10 +1,11 @@
 {
-  "prompts": [
+  "entries": [
     "meeting-minutes.md",
     "document-review.md",
     "policy-ideas.md",
     "survey-free-text.md",
     "workflow-review.md",
-    "excel-formula.md"
+    "excel-formula.md",
+    "業務フロー図のひな形.md"
   ]
 }

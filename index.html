@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>プロンプトライブラリ</title>
+<title>Markdown Library</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 16 16%27%3E%3Crect width=%2716%27 height=%2716%27 rx=%273%27 fill=%27%2314548c%27/%3E%3Cpath d=%27M4 5h8M4 8h8M4 11h5%27 stroke=%27%23fff%27 stroke-width=%271.5%27 stroke-linecap=%27round%27/%3E%3C/svg%3E">
 <link rel="stylesheet" href="css/style.css">
 </head>
@@ -12,10 +12,10 @@
 <header class="site-header">
   <div class="container site-header-inner">
     <div class="site-header-text">
-      <h1 class="site-title">プロンプトライブラリ</h1>
-      <p class="site-lead">業務で使える生成AI用プロンプトを共有しています。使いたいものを選んでコピーしてください。</p>
+      <h1 class="site-title">Markdown Library</h1>
+      <p class="site-lead">業務で再利用できるMarkdown形式のナレッジを共有しています。使いたいものを選んで、詳細画面からコピーしてください。</p>
     </div>
-    <a class="button button-cta" href="editor.html">＋ プロンプトを共有</a>
+    <a class="button button-cta" href="editor.html">＋ Markdownを追加</a>
   </div>
 </header>
 
@@ -33,9 +33,9 @@
       <div class="search-box">
         <label class="search-label" for="search">キーワード検索</label>
         <input id="search" class="search-input" type="search" autocomplete="off"
-               placeholder="例: 議事録　要約　住民" aria-describedby="search-hint">
+               placeholder="例: 議事録　PlantUML　住民" aria-describedby="search-hint">
         <p id="search-hint" class="search-hint">
-          タイトル・説明・カテゴリ・タグ・プロンプト本文をまとめて検索します。空白で区切るとすべてを含むものに絞り込みます。
+          タイトル・説明・カテゴリ・タグ・本文をまとめて検索します。空白で区切るとすべてを含むものに絞り込みます。
         </p>
       </div>
 
@@ -45,7 +45,7 @@
       </section>
 
       <section class="filter-group">
-        <h2 class="filter-title">タグ<span class="filter-note">用途・場面による分類。選ぶほど絞り込まれます。</span></h2>
+        <h2 class="filter-title">タグ<span class="filter-note">用途・形式・対象による分類。選ぶほど絞り込まれます。</span></h2>
         <div id="tag-filter" class="chips"></div>
       </section>
 
@@ -72,8 +72,9 @@
 
 <div id="live-region" class="sr-only" role="status" aria-live="polite"></div>
 
-<script src="js/prompt-parser.js"></script>
+<script src="js/entry-parser.js"></script>
 <script src="js/markdown.js"></script>
+<script src="js/clipboard.js"></script>
 <script src="js/app.js"></script>
 </body>
 </html>

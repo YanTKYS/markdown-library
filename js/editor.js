@@ -1,7 +1,7 @@
 /*
- * プロンプトエディタ — Markdown を直接書かずに作成・編集するための画面。
- * data/tags.json のカテゴリ・タグを使い、フォーム内容から
- * Prompt Library 仕様の Markdown を生成する。
+ * Markdown エディタ — front matter を手書きせずに、エントリを作成・編集するための画面。
+ * data/tags.json のカテゴリ・タグを使い、フォーム内容と Markdown 本文から
+ * Markdown Library 仕様の Markdown（front matter ＋ 本文）を生成する。
  * GitHub / IIS への反映は行わない（.md ファイルのダウンロードのみ）。
  */
 (function () {
@@ -124,8 +124,7 @@
       category: currentCategory(),
       tags: allTags(),
       description: el.description.value.trim(),
-      usage: el.usage.value,
-      prompt: el.prompt.value
+      body: el.body.value
     };
   }
 
@@ -201,11 +200,11 @@
   }
 
   // ---------------------------------------------------------------
-  // 詳細画面からの「このプロンプトを編集」導線（?file=... で開いた場合）
-  // 読み込み対象は必ず prompts/ 直下のファイル名1つに限定し、
+  // 詳細画面からの「このMarkdownを編集」導線（?file=... で開いた場合）
+  // 読み込み対象は必ず entries/ 直下のファイル名1つに限定し、
   // パス区切り文字や特殊名を含む値はパストラバーサル防止のため拒否する。
   // ---------------------------------------------------------------
-  function isSafePromptFilename(name) {
+  function isSafeEntryFilename(name) {
     if (typeof name !== 'string' || name === '') return false;
     if (name === '.' || name === '..') return false;
     if (FORBIDDEN_CHARS_REGEX.test(name)) return false; // \ / : * ? " < > | （区切り文字を含む＝経路指定を拒否）
@@ -214,11 +213,11 @@
     return true;
   }
 
-  function loadPromptFromLibrary(rawName) {
+  function loadEntryFromLibrary(rawName) {
     var name = String(rawName || '').normalize('NFC');
 
-    if (!isSafePromptFilename(name)) {
-      el.loadStatus.textContent = '指定されたファイル名は読み込めません（' + name + '）。prompts/ 直下の .md ファイル名を指定してください。';
+    if (!isSafeEntryFilename(name)) {
+      el.loadStatus.textContent = '指定されたファイル名は読み込めません（' + name + '）。entries/ 直下の .md ファイル名を指定してください。';
       return;
     }
 
@@ -227,15 +226,15 @@
     // ファイル名を1つのパスセグメントとしてエンコードする。
     // 今回の仕様では "#" "%" 等もファイル名に使えるため、そのまま連結すると
     // URL のフラグメントやパーセントエンコーディングとして誤解釈されうる。
-    fetch(url('prompts/' + encodeURIComponent(name)), { cache: 'no-cache' }).then(function (response) {
+    fetch(url('entries/' + encodeURIComponent(name)), { cache: 'no-cache' }).then(function (response) {
       if (!response.ok) throw new Error('HTTP ' + response.status);
       return response.text();
     }).then(function (text) {
-      var parsed = PromptParser.parse(text);
+      var parsed = EntryParser.parse(text);
       applyParsed(parsed, name);
       el.loadStatus.textContent = '「' + name + '」を読み込みました。内容を編集して保存してください。';
     }).catch(function (error) {
-      el.loadStatus.textContent = '「' + name + '」を読み込めませんでした。prompts/ フォルダに存在するか確認してください。' +
+      el.loadStatus.textContent = '「' + name + '」を読み込めませんでした。entries/ フォルダに存在するか確認してください。' +
         '（' + (error && error.message ? error.message : error) + '）';
     });
   }
@@ -244,9 +243,10 @@
     var params = new URLSearchParams(window.location.search);
     var raw = params.get('file');
     if (!raw) return;
-    loadPromptFromLibrary(raw);
+    loadEntryFromLibrary(raw);
   }
 
+  // 一覧画面の詳細表示と同じ見た目・同じレンダラーで本文を表示する。
   function renderPreviewDetail(fields) {
     var html = '<header class="detail-header">' +
       '<span class="card-category">' + esc(fields.category || '(カテゴリ未設定)') + '</span>' +
@@ -259,20 +259,16 @@
         : '') +
       '</header>';
 
-    if (fields.usage.trim() !== '') {
-      html += '<section class="detail-section"><h3>使い方</h3>' +
-        '<div class="prose">' + MiniMarkdown.render(fields.usage) + '</div></section>';
-    }
-
-    html += '<section class="detail-section"><h3>プロンプト</h3>' +
-      '<pre class="prompt-body">' + esc(fields.prompt.trim()) + '</pre></section>';
+    html += fields.body.trim() !== ''
+      ? '<div class="markdown-body">' + MiniMarkdown.render(fields.body, { headingOffset: 2 }) + '</div>'
+      : '<p class="preview-empty">（Markdown 本文を入力すると、ここに表示されます）</p>';
 
     el.previewDetail.innerHTML = html;
   }
 
   function updatePreview() {
     var fields = currentFields();
-    var markdown = PromptParser.buildMarkdown(fields);
+    var markdown = EntryParser.buildMarkdown(fields);
     el.rawOutput.value = markdown;
 
     renderPreviewDetail(fields);
@@ -289,7 +285,7 @@
     }
 
     var ready = fields.title !== '' && fields.category !== '' &&
-      fields.description !== '' && fields.prompt.trim() !== '' && filenameOk;
+      fields.description !== '' && fields.body.trim() !== '' && filenameOk;
 
     el.btnDownload.disabled = !ready;
 
@@ -311,13 +307,12 @@
     state.unknownTags = [];
     el.title.value = '';
     el.description.value = '';
-    el.usage.value = '';
-    el.prompt.value = '';
+    el.body.value = '';
     el.filename.value = '';
     el.loadStatus.textContent = '';
 
     // URL から ?file=... を外す。残したままだと、画面を再読み込みしたときに
-    // 元のプロンプトが読み込み直され、入力中の内容が消えてしまう。
+    // 元の Markdown が読み込み直され、入力中の内容が消えてしまう。
     if (window.location.search) {
       window.history.replaceState(null, '', window.location.pathname);
     }
@@ -329,13 +324,13 @@
 
   function applyParsed(parsed, fileName) {
     var meta = parsed.meta;
-    var tags = PromptParser.toArray(meta.tags);
-    var category = PromptParser.toText(meta.category);
+    var tags = EntryParser.toArray(meta.tags);
+    var category = EntryParser.toText(meta.category);
 
-    el.title.value = PromptParser.toText(meta.title);
-    el.description.value = PromptParser.toText(meta.description);
-    el.usage.value = parsed.usage;
-    el.prompt.value = parsed.prompt;
+    el.title.value = EntryParser.toText(meta.title);
+    el.description.value = EntryParser.toText(meta.description);
+    // front matter を除いた本文は、手を加えずにそのまま本文欄へ展開する。
+    el.body.value = parsed.body;
 
     // 定義済みのカテゴリ・タグはチップで選択状態にする。未定義の値は
     // 消さずに保持し、警告付きの表示にとどめる（追加は管理側の作業とする）。
@@ -369,7 +364,7 @@
     var reader = new FileReader();
     reader.onload = function () {
       try {
-        var parsed = PromptParser.parse(String(reader.result));
+        var parsed = EntryParser.parse(String(reader.result));
         applyParsed(parsed, file.name);
         el.loadStatus.textContent = file.name + ' を読み込みました。';
       } catch (e) {
@@ -422,7 +417,7 @@
       toggleTag(button.dataset.tag);
     });
 
-    ['title', 'description', 'usage', 'prompt', 'filename'].forEach(function (key) {
+    ['title', 'description', 'body', 'filename'].forEach(function (key) {
       el[key].addEventListener('input', updatePreview);
     });
 
@@ -437,6 +432,14 @@
     });
 
     el.btnDownload.addEventListener('click', downloadMarkdown);
+
+    // プレビュー内のコードブロックも、一覧画面と同じようにコピーできるようにする。
+    el.previewDetail.addEventListener('click', function (event) {
+      var button = event.target.closest('.code-copy');
+      if (!button) return;
+      var code = CopyHelper.codeOfButton(button);
+      if (code !== null) CopyHelper.copyFromButton(button, code);
+    });
   }
 
   function fetchJson(path) {
@@ -454,8 +457,7 @@
       tagWarning: document.getElementById('tag-warning'),
       title: document.getElementById('f-title'),
       description: document.getElementById('f-description'),
-      usage: document.getElementById('f-usage'),
-      prompt: document.getElementById('f-prompt'),
+      body: document.getElementById('f-body'),
       filename: document.getElementById('f-filename'),
       filenameError: document.getElementById('filename-error'),
       fileInput: document.getElementById('file-input'),

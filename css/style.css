@@ -1,4 +1,4 @@
-/* Prompt Library — 画面スタイル（外部フォント・CDN 不使用） */
+/* Markdown Library — 画面スタイル（外部フォント・CDN 不使用） */
 
 :root {
   --ink: #1c2530;
@@ -63,7 +63,7 @@ body {
   color: #d6e5f2;
 }
 
-/* ヘッダー上の主要導線（新しいプロンプトを共有する） */
+/* ヘッダー上の主要導線（Markdown を追加する） */
 .button-cta {
   flex-shrink: 0;
   padding: 10px 18px;
@@ -487,55 +487,101 @@ kbd {
   color: var(--ink-soft);
 }
 
-.detail-section { margin-top: 24px; }
-
-.detail-section h3 {
-  margin: 0 0 8px;
-  font-size: 15px;
-  padding-left: 9px;
-  border-left: 4px solid var(--accent);
-}
-
-.prose { font-size: 14px; }
-.prose p { margin: 0 0 8px; }
-.prose ul, .prose ol { margin: 0 0 8px; padding-left: 1.6em; }
-.prose code {
-  background: #eef1f4;
-  border-radius: 3px;
-  padding: 1px 4px;
-  font-size: 13px;
-}
-
-.prompt-bar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  flex-wrap: wrap;
-  margin-bottom: 10px;
-}
-
-.prompt-bar h3 { margin: 0; }
-
-.prompt-bar-actions {
+/* 詳細画面の操作（Markdownをコピー・編集） */
+.detail-actions {
   display: flex;
   align-items: center;
   gap: 10px;
   flex-wrap: wrap;
+  margin: 16px 0 4px;
 }
 
-.prompt-body {
+.detail-actions-note {
+  flex-basis: 100%;
   margin: 0;
-  padding: 16px 18px;
+  font-size: 12px;
+  color: var(--ink-soft);
+}
+
+/* ---------- Markdown 本文 ---------- */
+/* 見出しは文書構造上 h3〜h6 で出力し、見た目は元のレベル（md-h1〜md-h6）に合わせる */
+
+.markdown-body {
+  margin-top: 20px;
+  font-size: 14px;
+  overflow-wrap: anywhere;
+}
+
+.markdown-body > :first-child { margin-top: 0; }
+
+.markdown-body h3,
+.markdown-body h4,
+.markdown-body h5,
+.markdown-body h6 {
+  margin: 24px 0 8px;
+  line-height: 1.5;
+}
+
+.markdown-body .md-h1 { font-size: 19px; padding-bottom: 4px; border-bottom: 1px solid var(--line); }
+.markdown-body .md-h2 { font-size: 16px; padding-left: 9px; border-left: 4px solid var(--accent); }
+.markdown-body .md-h3 { font-size: 15px; }
+.markdown-body .md-h4,
+.markdown-body .md-h5,
+.markdown-body .md-h6 { font-size: 14px; }
+
+.markdown-body p { margin: 0 0 10px; }
+.markdown-body ul, .markdown-body ol { margin: 0 0 10px; padding-left: 1.6em; }
+.markdown-body li > ul, .markdown-body li > ol { margin-bottom: 0; }
+.markdown-body hr { margin: 20px 0; border: 0; border-top: 1px solid var(--line); }
+
+.markdown-body code {
+  background: #eef1f4;
+  border-radius: 3px;
+  padding: 1px 4px;
+  font-family: "Consolas", "Menlo", "Yu Gothic", monospace;
+  font-size: 13px;
+}
+
+/* コードブロック（言語名とコピーボタン付き） */
+.code-block {
+  margin: 0 0 14px;
   background: var(--panel);
   border: 1px solid var(--line);
   border-radius: var(--radius);
+}
+
+.code-block-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 4px 8px 4px 14px;
+  background: #f7f9fb;
+  border-bottom: 1px solid var(--line-soft);
+  border-radius: var(--radius) var(--radius) 0 0;
+}
+
+.code-lang {
+  font-family: "Consolas", "Menlo", "Yu Gothic", monospace;
+  font-size: 12px;
+  color: var(--ink-soft);
+}
+
+.code-block pre {
+  margin: 0;
+  padding: 14px 18px;
   font-family: "Consolas", "Menlo", "Yu Gothic", monospace;
   font-size: 13.5px;
   line-height: 1.85;
   white-space: pre-wrap;
   word-break: break-word;
   overflow-wrap: anywhere;
+}
+
+.markdown-body .code-block code {
+  padding: 0;
+  background: none;
+  font-size: inherit;
 }
 
 /* ---------- 補助 ---------- */
