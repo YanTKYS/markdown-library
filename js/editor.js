@@ -71,11 +71,21 @@
     }
   }
 
+  // チップは描き直すたびに作り直されるため、キーボードで押したときにフォーカスが
+  // ページ先頭へ外れてしまう。押したチップへフォーカスを戻す。
+  function refocus(container, key, value) {
+    var buttons = container.querySelectorAll('button');
+    for (var i = 0; i < buttons.length; i++) {
+      if (buttons[i].dataset[key] === value) { buttons[i].focus(); return; }
+    }
+  }
+
   function toggleCategory(category) {
     state.selectedCategory = state.selectedCategory === category ? '' : category;
     // カテゴリは1つだけのため、定義済みを選んだ時点で未定義の保持値は置き換える。
     if (state.selectedCategory) state.unknownCategory = '';
     renderCategoryChips();
+    refocus(el.categoryChips, 'category', category);
     updatePreview();
   }
 
@@ -93,6 +103,7 @@
       state.selectedTags.splice(index, 1);
     }
     renderTagChips();
+    refocus(el.tagChips, 'tag', tag);
     updatePreview();
   }
 
@@ -195,22 +206,15 @@
     return '';
   }
 
-  function validateFilename(name) {
-    return filenameError(name) === '';
-  }
-
   // ---------------------------------------------------------------
   // 詳細画面からの「このMarkdownを編集」導線（?file=... で開いた場合）
   // 読み込み対象は必ず entries/ 直下のファイル名1つに限定し、
   // パス区切り文字や特殊名を含む値はパストラバーサル防止のため拒否する。
   // ---------------------------------------------------------------
   function isSafeEntryFilename(name) {
-    if (typeof name !== 'string' || name === '') return false;
-    if (name === '.' || name === '..') return false;
-    if (FORBIDDEN_CHARS_REGEX.test(name)) return false; // \ / : * ? " < > | （区切り文字を含む＝経路指定を拒否）
-    if (CONTROL_CHARS_REGEX.test(name)) return false;
-    if (!/\.md$/i.test(name)) return false;
-    return true;
+    // \ / を含む（＝別の場所を指す）値は、FORBIDDEN_CHARS_REGEX で拒否される。
+    // 末尾を .md に限定するため「.」「..」も通らない。
+    return /\.md$/i.test(name) && !FORBIDDEN_CHARS_REGEX.test(name) && !CONTROL_CHARS_REGEX.test(name);
   }
 
   function loadEntryFromLibrary(rawName) {
@@ -237,13 +241,6 @@
       el.loadStatus.textContent = '「' + name + '」を読み込めませんでした。entries/ フォルダに存在するか確認してください。' +
         '（' + (error && error.message ? error.message : error) + '）';
     });
-  }
-
-  function loadFromQueryString() {
-    var params = new URLSearchParams(window.location.search);
-    var raw = params.get('file');
-    if (!raw) return;
-    loadEntryFromLibrary(raw);
   }
 
   // 一覧画面の詳細表示と同じ見た目・同じレンダラーで本文を表示する。
@@ -382,7 +379,7 @@
   // ---------------------------------------------------------------
   function downloadMarkdown() {
     var filename = normalizedFilename();
-    if (!validateFilename(filename)) return;
+    if (filenameError(filename) !== '') return;
 
     var blob = new Blob([el.rawOutput.value], { type: 'text/markdown;charset=utf-8' });
     var objectUrl = URL.createObjectURL(blob);
@@ -482,7 +479,8 @@
       renderCategoryChips();
       renderTagChips();
       updatePreview();
-      loadFromQueryString();
+      var file = new URLSearchParams(window.location.search).get('file');
+      if (file) loadEntryFromLibrary(file);
     });
   }
 

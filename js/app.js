@@ -104,35 +104,49 @@
   // ---------------------------------------------------------------
   var esc = MiniMarkdown.escapeHtml;
 
+  // 絞り込みチップ1つ分。attr は data-category / data-tag のどちらか。
+  function chip(kind, attr, value, label, on, count) {
+    return '<button type="button" class="chip chip-' + kind + (on ? ' is-on' : '') +
+      (count === 0 && !on ? ' is-empty' : '') + '" ' + attr + '="' + esc(value) +
+      '" aria-pressed="' + (on ? 'true' : 'false') + '">' + esc(label) +
+      '<span class="chip-count">' + count + '</span></button>';
+  }
+
+  // 一覧カード・詳細画面のタグ（押すとそのタグで絞り込んだ一覧へ移る）。
+  function tagButtons(tags) {
+    return tags.map(function (t) {
+      return '<button type="button" class="tag tag-button" data-tag="' + esc(t) + '">#' + esc(t) + '</button>';
+    }).join('');
+  }
+
   function renderCategoryFilter() {
-    var html = '<button type="button" class="chip chip-category' + (state.category === '' ? ' is-on' : '') +
-      '" data-category="" aria-pressed="' + (state.category === '' ? 'true' : 'false') + '">すべて' +
-      '<span class="chip-count">' + countWith('', state.selectedTags) + '</span></button>';
+    var html = chip('category', 'data-category', '', 'すべて',
+      state.category === '', countWith('', state.selectedTags));
 
     state.categories.forEach(function (category) {
-      var count = countWith(category, state.selectedTags);
-      var on = state.category === category;
-      html += '<button type="button" class="chip chip-category' + (on ? ' is-on' : '') +
-        (count === 0 && !on ? ' is-empty' : '') + '" data-category="' + esc(category) +
-        '" aria-pressed="' + (on ? 'true' : 'false') + '">' + esc(category) +
-        '<span class="chip-count">' + count + '</span></button>';
+      html += chip('category', 'data-category', category, category,
+        state.category === category, countWith(category, state.selectedTags));
     });
 
     el.categoryFilter.innerHTML = html;
   }
 
   function renderTagFilter() {
-    var html = '';
-    state.tags.forEach(function (tag) {
+    el.tagFilter.innerHTML = state.tags.map(function (tag) {
       var on = state.selectedTags.indexOf(tag) !== -1;
-      var probe = on ? state.selectedTags : state.selectedTags.concat([tag]);
-      var count = countWith(state.category, probe);
-      html += '<button type="button" class="chip chip-tag' + (on ? ' is-on' : '') +
-        (count === 0 && !on ? ' is-empty' : '') + '" data-tag="' + esc(tag) +
-        '" aria-pressed="' + (on ? 'true' : 'false') + '">#' + esc(tag) +
-        '<span class="chip-count">' + count + '</span></button>';
-    });
-    el.tagFilter.innerHTML = html;
+      // 未選択のタグは「選んだら何件になるか」を表示する。
+      var count = countWith(state.category, on ? state.selectedTags : state.selectedTags.concat([tag]));
+      return chip('tag', 'data-tag', tag, '#' + tag, on, count);
+    }).join('');
+  }
+
+  // チップは描き直すたびに作り直されるため、キーボードで押したときにフォーカスが
+  // ページ先頭へ外れてしまう。押したチップへフォーカスを戻す。
+  function refocus(container, key, value) {
+    var buttons = container.querySelectorAll('button');
+    for (var i = 0; i < buttons.length; i++) {
+      if (buttons[i].dataset[key] === value) { buttons[i].focus(); return; }
+    }
   }
 
   function renderActiveFilters() {
@@ -186,9 +200,7 @@
           '<p class="card-description">' + esc(entry.description) + '</p>' +
         '</a>' +
         (entry.tags.length
-          ? '<div class="card-footer"><div class="card-tags">' + entry.tags.map(function (t) {
-              return '<button type="button" class="tag tag-button" data-tag="' + esc(t) + '">#' + esc(t) + '</button>';
-            }).join('') + '</div></div>'
+          ? '<div class="card-footer"><div class="card-tags">' + tagButtons(entry.tags) + '</div></div>'
           : '') +
       '</article>';
     }).join('');
@@ -200,11 +212,7 @@
         '<span class="card-category">' + esc(entry.category) + '</span>' +
         '<h2 class="detail-title">' + esc(entry.title) + '</h2>' +
         (entry.description ? '<p class="detail-description">' + esc(entry.description) + '</p>' : '') +
-        (entry.tags.length
-          ? '<div class="detail-tags">' + entry.tags.map(function (t) {
-              return '<button type="button" class="tag tag-button" data-tag="' + esc(t) + '">#' + esc(t) + '</button>';
-            }).join('') + '</div>'
-          : '') +
+        (entry.tags.length ? '<div class="detail-tags">' + tagButtons(entry.tags) + '</div>' : '') +
       '</header>' +
       '<div class="detail-actions">' +
         '<button type="button" class="button button-primary" data-copy-entry="' + esc(entry.id) + '">Markdownをコピー</button>' +
@@ -317,24 +325,22 @@
     el.categoryFilter.addEventListener('click', function (event) {
       var button = event.target.closest('[data-category]');
       if (!button) return;
-      state.category = button.dataset.category === state.category ? '' : button.dataset.category;
+      var category = button.dataset.category;
+      state.category = category === state.category ? '' : category;
       refreshList();
+      refocus(el.categoryFilter, 'category', category);
     });
 
     el.tagFilter.addEventListener('click', function (event) {
       var button = event.target.closest('[data-tag]');
       if (!button) return;
-      toggleTag(button.dataset.tag);
+      var tag = button.dataset.tag;
+      toggleTag(tag);
       refreshList();
+      refocus(el.tagFilter, 'tag', tag);
     });
 
-    el.activeFilters.addEventListener('click', function (event) {
-      var button = event.target.closest('[data-clear]');
-      if (!button) return;
-      clearFilter(button.dataset.clear, button.dataset.tag);
-    });
-
-    // 一覧と詳細に共通する操作（タグ絞り込み・コピー）をまとめて拾う。
+    // 一覧と詳細に共通する操作（絞り込み解除・タグ絞り込み・コピー）をまとめて拾う。
     document.addEventListener('click', function (event) {
       var entryCopyButton = event.target.closest('[data-copy-entry]');
       if (entryCopyButton) {
@@ -350,7 +356,8 @@
         return;
       }
 
-      var clearButton = event.target.closest('.empty [data-clear]');
+      // 「絞り込み中」欄の × ／すべて解除、0件時の「絞り込みを解除する」
+      var clearButton = event.target.closest('[data-clear]');
       if (clearButton) {
         clearFilter(clearButton.dataset.clear, clearButton.dataset.tag);
         return;
@@ -369,6 +376,9 @@
     window.addEventListener('hashchange', route);
 
     document.addEventListener('keydown', function (event) {
+      // 日本語入力の変換中の Esc（変換の取り消し）で、検索語まで消さないようにする。
+      if (event.isComposing) return;
+
       var inField = /^(INPUT|TEXTAREA|SELECT)$/.test(event.target.tagName);
 
       if (event.key === '/' && !inField && !event.ctrlKey && !event.metaKey && !event.altKey) {
@@ -472,18 +482,17 @@
    * 　ライブラリ全体が表示できなくなるのを避けるため）
    */
   function loadEntries(files) {
-    var failed = [];
-
     return Promise.all(files.map(function (file) {
       // ファイル名は1つのパスセグメントとしてエンコードする。
       // 「#」を含む名前をそのまま連結すると、URL の断片指定として扱われ取得できない。
       return fetchText('entries/' + encodeURIComponent(file))
         .then(function (text) { return parseEntry(file, text); })
-        .catch(function () { failed.push(file); return null; });
+        .catch(function () { return null; });
     })).then(function (results) {
       return {
         entries: results.filter(function (entry) { return entry !== null; }),
-        failed: failed
+        // manifest.json の記載順で知らせる
+        failed: files.filter(function (file, i) { return results[i] === null; })
       };
     });
   }
