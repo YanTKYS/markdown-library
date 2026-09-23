@@ -1,8 +1,11 @@
-/* プロンプトエディタ専用スタイル（style.css を前提に、フォーム・プレビューの分だけ追加する） */
+/* Markdown エディタ専用スタイル（style.css を前提に、フォーム・プレビューの分だけ追加する） */
 
 .editor-main { padding-bottom: 40px; }
 
 .back-link { display: inline-block; margin-bottom: 8px; }
+
+/* ヘッダー（濃い背景）の上に置くため、文字色を白にする */
+.site-header .back-link { color: #fff; margin-top: 0; }
 
 .editor-section { margin: 24px 0; }
 
@@ -109,7 +112,7 @@
   color: #6b5514;
 }
 
-#f-prompt {
+#f-body {
   font-family: "Consolas", "Menlo", "Yu Gothic", monospace;
   font-size: 13.5px;
   line-height: 1.7;
@@ -130,6 +133,12 @@
   padding: 16px;
   background: var(--panel);
   min-height: 80px;
+}
+
+.preview-empty {
+  margin: 20px 0 0;
+  font-size: 13px;
+  color: var(--ink-soft);
 }
 
 .raw-heading {

@@ -1,5 +1,5 @@
 /*
- * Prompt Library — 一覧・検索・詳細表示
+ * Markdown Library — 一覧・検索・詳細表示
  * ビルド不要。fetch で Markdown を読み、ブラウザ内で検索・絞り込みを行う。
  */
 (function () {
@@ -7,14 +7,14 @@
 
   // ---------------------------------------------------------------
   // 配置場所の解決
-  // サブディレクトリ配置（例 /tools/prompt-library/）や末尾スラッシュ無しの
+  // サブディレクトリ配置（例 /tools/markdown-library/）や末尾スラッシュ無しの
   // URL でも壊れないよう、自身の script src からサイトルートを求める。
   // ---------------------------------------------------------------
   var BASE = new URL('../', document.currentScript.src);
   function url(path) { return new URL(path, BASE).href; }
 
   var state = {
-    prompts: [],
+    entries: [],
     categories: [],
     tags: [],
     query: '',
@@ -38,17 +38,17 @@
     return normalized === '' ? [] : normalized.split(/\s+/);
   }
 
-  // front matter・本文の解析は js/prompt-parser.js（PromptParser）に共通化している。
+  // front matter・本文の解析は js/entry-parser.js（EntryParser）に共通化している。
   // editor.html（作成・編集）と同じロジックを使うことで、仕様のズレを防ぐ。
-  function parsePrompt(fileName, text) {
-    var parsed = PromptParser.parse(text);
+  function parseEntry(fileName, text) {
+    var parsed = EntryParser.parse(text);
     var meta = parsed.meta;
     // front matter の値は toText で必ず文字列にそろえる。
     // 値を書き忘れた行（「description:」だけ等）は配列になるため、そのまま使うと表示時に落ちる。
-    var title = PromptParser.toText(meta.title) || fileName.replace(/\.md$/i, '');
-    var category = PromptParser.toText(meta.category) || '未分類';
-    var description = PromptParser.toText(meta.description);
-    var tags = PromptParser.toArray(meta.tags);
+    var title = EntryParser.toText(meta.title) || fileName.replace(/\.md$/i, '');
+    var category = EntryParser.toText(meta.category) || '未分類';
+    var description = EntryParser.toText(meta.description);
+    var tags = EntryParser.toArray(meta.tags);
 
     return {
       id: fileName.replace(/\.md$/i, ''),
@@ -57,41 +57,40 @@
       category: category,
       tags: tags,
       description: description,
-      usage: parsed.usage,
-      prompt: parsed.prompt,
-      hasPromptSection: parsed.hasPromptSection,
+      // front matter を除いた Markdown 本文。「Markdownをコピー」の対象もこれ。
+      body: parsed.body,
       // 検索対象: タイトル / 説明 / カテゴリ / タグ / 本文
-      searchText: normalize([title, description, category, tags.join(' '), parsed.rawBody].join('\n'))
+      searchText: normalize([title, description, category, tags.join(' '), parsed.body].join('\n'))
     };
   }
 
   // ---------------------------------------------------------------
   // 絞り込み
   // ---------------------------------------------------------------
-  function matches(prompt, terms, category, tags) {
-    if (category && prompt.category !== category) return false;
+  function matches(entry, terms, category, tags) {
+    if (category && entry.category !== category) return false;
 
     for (var i = 0; i < tags.length; i++) {
-      if (prompt.tags.indexOf(tags[i]) === -1) return false;
+      if (entry.tags.indexOf(tags[i]) === -1) return false;
     }
     for (var j = 0; j < terms.length; j++) {
-      if (prompt.searchText.indexOf(terms[j]) === -1) return false;
+      if (entry.searchText.indexOf(terms[j]) === -1) return false;
     }
     return true;
   }
 
   function filtered() {
     var terms = queryTerms(state.query);
-    return state.prompts.filter(function (p) {
-      return matches(p, terms, state.category, state.selectedTags);
+    return state.entries.filter(function (entry) {
+      return matches(entry, terms, state.category, state.selectedTags);
     });
   }
 
   function countWith(category, tags) {
     var terms = queryTerms(state.query);
     var count = 0;
-    state.prompts.forEach(function (p) {
-      if (matches(p, terms, category, tags)) count++;
+    state.entries.forEach(function (entry) {
+      if (matches(entry, terms, category, tags)) count++;
     });
     return count;
   }
@@ -169,66 +168,54 @@
     var results = filtered();
 
     el.count.textContent = hasActiveFilter()
-      ? results.length + '件 / 全' + state.prompts.length + '件'
-      : '全' + state.prompts.length + '件';
+      ? results.length + '件 / 全' + state.entries.length + '件'
+      : '全' + state.entries.length + '件';
 
     if (results.length === 0) {
-      el.results.innerHTML = '<p class="empty">条件に一致するプロンプトはありません。' +
+      el.results.innerHTML = '<p class="empty">条件に一致する Markdown はありません。' +
         '<button type="button" class="link-button" data-clear="all">絞り込みを解除する</button></p>';
       return;
     }
 
-    el.results.innerHTML = results.map(function (p) {
+    // 一覧は探すことを優先し、コピー操作は詳細画面にまとめる。
+    el.results.innerHTML = results.map(function (entry) {
       return '<article class="card">' +
-        '<a class="card-main" href="#' + encodeURIComponent(p.id) + '">' +
-          '<span class="card-category">' + esc(p.category) + '</span>' +
-          '<h3 class="card-title">' + esc(p.title) + '</h3>' +
-          '<p class="card-description">' + esc(p.description) + '</p>' +
+        '<a class="card-main" href="#' + encodeURIComponent(entry.id) + '">' +
+          '<span class="card-category">' + esc(entry.category) + '</span>' +
+          '<h3 class="card-title">' + esc(entry.title) + '</h3>' +
+          '<p class="card-description">' + esc(entry.description) + '</p>' +
         '</a>' +
-        '<div class="card-footer">' +
-          '<div class="card-tags">' + p.tags.map(function (t) {
-            return '<button type="button" class="tag tag-button" data-tag="' + esc(t) + '">#' + esc(t) + '</button>';
-          }).join('') + '</div>' +
-          '<button type="button" class="button button-quiet card-copy" data-copy="' + esc(p.id) + '">コピー</button>' +
-        '</div>' +
+        (entry.tags.length
+          ? '<div class="card-footer"><div class="card-tags">' + entry.tags.map(function (t) {
+              return '<button type="button" class="tag tag-button" data-tag="' + esc(t) + '">#' + esc(t) + '</button>';
+            }).join('') + '</div></div>'
+          : '') +
       '</article>';
     }).join('');
   }
 
-  function renderDetail(prompt) {
+  function renderDetail(entry) {
     var html = '<a class="back-link" href="#">← 一覧に戻る</a>' +
       '<header class="detail-header">' +
-        '<span class="card-category">' + esc(prompt.category) + '</span>' +
-        '<h2 class="detail-title">' + esc(prompt.title) + '</h2>' +
-        (prompt.description ? '<p class="detail-description">' + esc(prompt.description) + '</p>' : '') +
-        (prompt.tags.length
-          ? '<div class="detail-tags">' + prompt.tags.map(function (t) {
+        '<span class="card-category">' + esc(entry.category) + '</span>' +
+        '<h2 class="detail-title">' + esc(entry.title) + '</h2>' +
+        (entry.description ? '<p class="detail-description">' + esc(entry.description) + '</p>' : '') +
+        (entry.tags.length
+          ? '<div class="detail-tags">' + entry.tags.map(function (t) {
               return '<button type="button" class="tag tag-button" data-tag="' + esc(t) + '">#' + esc(t) + '</button>';
             }).join('') + '</div>'
           : '') +
-      '</header>';
-
-    if (prompt.usage) {
-      html += '<section class="detail-section">' +
-        '<h3>使い方</h3>' +
-        '<div class="prose">' + MiniMarkdown.render(prompt.usage) + '</div>' +
-      '</section>';
-    }
-
-    html += '<section class="detail-section">' +
-      '<div class="prompt-bar">' +
-        '<h3>プロンプト</h3>' +
-        '<div class="prompt-bar-actions">' +
-          '<a class="button button-quiet" href="editor.html?file=' + encodeURIComponent(prompt.file) + '">このプロンプトを編集</a>' +
-          '<button type="button" class="button button-primary" data-copy="' + esc(prompt.id) + '">プロンプトをコピー</button>' +
-        '</div>' +
+      '</header>' +
+      '<div class="detail-actions">' +
+        '<button type="button" class="button button-primary" data-copy-entry="' + esc(entry.id) + '">Markdownをコピー</button>' +
+        '<a class="button button-quiet" href="editor.html?file=' + encodeURIComponent(entry.file) + '">このMarkdownを編集</a>' +
+        '<p class="detail-actions-note">「Markdownをコピー」は本文全体をコピーします。' +
+          '<span class="code-hint" hidden>コードブロックの「コピー」では、そのブロックの内容だけをコピーできます。</span></p>' +
       '</div>' +
-      (prompt.hasPromptSection ? '' :
-        '<p class="notice">この Markdown に「## プロンプト」の見出しがないため、本文全体をコピー対象にしています。</p>') +
-      '<pre class="prompt-body">' + esc(prompt.prompt) + '</pre>' +
-    '</section>';
+      '<div class="markdown-body">' + MiniMarkdown.render(entry.body, { headingOffset: 2 }) + '</div>';
 
     el.detail.innerHTML = html;
+    el.detail.querySelector('.code-hint').hidden = !el.detail.querySelector('.code-block');
   }
 
   // ---------------------------------------------------------------
@@ -242,13 +229,13 @@
 
   function route() {
     var id = currentId();
-    var prompt = id ? findPrompt(id) : null;
+    var entry = id ? findEntry(id) : null;
 
-    if (prompt) {
-      renderDetail(prompt);
+    if (entry) {
+      renderDetail(entry);
       el.listView.hidden = true;
       el.detail.hidden = false;
-      document.title = prompt.title + ' | プロンプトライブラリ';
+      document.title = entry.title + ' | Markdown Library';
       el.detail.focus({ preventScroll: true });
       window.scrollTo(0, 0);
     } else {
@@ -256,14 +243,14 @@
       el.detail.hidden = true;
       el.detail.innerHTML = '';
       el.listView.hidden = false;
-      document.title = 'プロンプトライブラリ';
+      document.title = 'Markdown Library';
       refreshList();
     }
   }
 
-  function findPrompt(id) {
-    for (var i = 0; i < state.prompts.length; i++) {
-      if (state.prompts[i].id === id) return state.prompts[i];
+  function findEntry(id) {
+    for (var i = 0; i < state.entries.length; i++) {
+      if (state.entries[i].id === id) return state.entries[i];
     }
     return null;
   }
@@ -282,62 +269,30 @@
   }
 
   // ---------------------------------------------------------------
-  // コピー
-  // 庁内 IIS は http:// 配信になることがあり、その場合 navigator.clipboard は
-  // 使えない（secure context 限定）。旧方式へ確実にフォールバックする。
+  // コピー（処理本体は js/clipboard.js の CopyHelper に共通化している）
   // ---------------------------------------------------------------
-  function copyText(text) {
-    if (navigator.clipboard && window.isSecureContext) {
-      return navigator.clipboard.writeText(text);
-    }
-    return new Promise(function (resolve, reject) {
-      var area = document.createElement('textarea');
-      area.value = text;
-      area.setAttribute('readonly', '');
-      area.style.position = 'fixed';
-      area.style.top = '-1000px';
-      document.body.appendChild(area);
-      area.select();
-      var ok = false;
-      try { ok = document.execCommand('copy'); } catch (e) { ok = false; }
-      document.body.removeChild(area);
-      ok ? resolve() : reject(new Error('copy failed'));
+
+  // 詳細画面の「Markdownをコピー」。front matter を除いた本文全体をコピーする。
+  function handleEntryCopy(button, id) {
+    var entry = findEntry(id);
+    if (!entry) return;
+
+    CopyHelper.copyFromButton(button, entry.body).then(function (ok) {
+      el.live.textContent = ok
+        ? entry.title + 'の Markdown をコピーしました'
+        : 'コピーに失敗しました。本文を選択して手動でコピーしてください。';
     });
   }
 
-  // 「コピーしました」と表示中のボタン。2秒後、または次のコピー時に元の表示へ戻す。
-  var activeCopy = null;
+  // コードブロックごとの「コピー」。フェンスや言語名を除いたコード本文だけをコピーする。
+  function handleCodeCopy(button) {
+    var code = CopyHelper.codeOfButton(button);
+    if (code === null) return;
 
-  function restoreCopyButton() {
-    if (!activeCopy) return;
-    window.clearTimeout(activeCopy.timer);
-    activeCopy.button.textContent = activeCopy.label;
-    activeCopy.button.classList.remove('is-done');
-    activeCopy = null;
-  }
-
-  function handleCopy(button, id) {
-    var prompt = findPrompt(id);
-    if (!prompt) return;
-
-    // 続けて別のプロンプトをコピーしたとき、前のボタンが
-    // 「コピーしました」のまま残らないように先に戻す。
-    restoreCopyButton();
-    var label = button.textContent;
-
-    copyText(prompt.prompt).then(function () {
-      button.textContent = 'コピーしました';
-      button.classList.add('is-done');
-      el.live.textContent = prompt.title + 'のプロンプトをコピーしました';
-    }, function () {
-      button.textContent = 'コピーできません';
-      el.live.textContent = 'コピーに失敗しました。プロンプト本文を選択して手動でコピーしてください。';
-    }).then(function () {
-      activeCopy = {
-        button: button,
-        label: label,
-        timer: window.setTimeout(restoreCopyButton, 2000)
-      };
+    CopyHelper.copyFromButton(button, code).then(function (ok) {
+      el.live.textContent = ok
+        ? 'コードブロックの内容をコピーしました'
+        : 'コピーに失敗しました。コードを選択して手動でコピーしてください。';
     });
   }
 
@@ -381,10 +336,17 @@
 
     // 一覧と詳細に共通する操作（タグ絞り込み・コピー）をまとめて拾う。
     document.addEventListener('click', function (event) {
-      var copyButton = event.target.closest('[data-copy]');
-      if (copyButton) {
+      var entryCopyButton = event.target.closest('[data-copy-entry]');
+      if (entryCopyButton) {
         event.preventDefault();
-        handleCopy(copyButton, copyButton.dataset.copy);
+        handleEntryCopy(entryCopyButton, entryCopyButton.dataset.copyEntry);
+        return;
+      }
+
+      var codeCopyButton = event.target.closest('.code-copy');
+      if (codeCopyButton) {
+        event.preventDefault();
+        handleCodeCopy(codeCopyButton);
         return;
       }
 
@@ -467,7 +429,7 @@
 
   function showError(message) {
     el.status.innerHTML = '<div class="error">' +
-      '<p><strong>プロンプトを読み込めませんでした。</strong></p>' +
+      '<p><strong>Markdown を読み込めませんでした。</strong></p>' +
       '<p>' + esc(message) + '</p>' +
       '<p class="error-hint">index.html をファイルとして直接開いた場合は動作しません。' +
       'IIS などの Web サーバに配置してから開いてください。' +
@@ -484,11 +446,11 @@
     list.forEach(function (tag) { seen[tag] = true; });
     // 定義済みタグのうち、実際に使われているものだけを表示する。
     list.forEach(function (tag) {
-      if (state.prompts.some(function (p) { return p.tags.indexOf(tag) !== -1; })) ordered.push(tag);
+      if (state.entries.some(function (entry) { return entry.tags.indexOf(tag) !== -1; })) ordered.push(tag);
     });
     // tags.json に未登録のタグも取りこぼさず末尾に出す。
-    state.prompts.forEach(function (p) {
-      p.tags.forEach(function (tag) {
+    state.entries.forEach(function (entry) {
+      entry.tags.forEach(function (tag) {
         if (!seen[tag]) { seen[tag] = true; ordered.push(tag); }
       });
     });
@@ -497,8 +459,8 @@
 
   function collectCategories(defined) {
     var ordered = Array.isArray(defined) ? defined.slice() : [];
-    state.prompts.forEach(function (p) {
-      if (ordered.indexOf(p.category) === -1) ordered.push(p.category);
+    state.entries.forEach(function (entry) {
+      if (ordered.indexOf(entry.category) === -1) ordered.push(entry.category);
     });
     return ordered;
   }
@@ -509,18 +471,18 @@
    * （manifest.json への登録漏れやファイル名の打ち間違いで、
    * 　ライブラリ全体が表示できなくなるのを避けるため）
    */
-  function loadPrompts(files) {
+  function loadEntries(files) {
     var failed = [];
 
     return Promise.all(files.map(function (file) {
       // ファイル名は1つのパスセグメントとしてエンコードする。
       // 「#」を含む名前をそのまま連結すると、URL の断片指定として扱われ取得できない。
-      return fetchText('prompts/' + encodeURIComponent(file))
-        .then(function (text) { return parsePrompt(file, text); })
+      return fetchText('entries/' + encodeURIComponent(file))
+        .then(function (text) { return parseEntry(file, text); })
         .catch(function () { failed.push(file); return null; });
     })).then(function (results) {
       return {
-        prompts: results.filter(function (p) { return p !== null; }),
+        entries: results.filter(function (entry) { return entry !== null; }),
         failed: failed
       };
     });
@@ -536,7 +498,7 @@
   function showSkipped(failed) {
     if (failed.length === 0) return;
     el.skipped.textContent = '次のファイルを読み込めませんでした: ' + failed.join('、') +
-      '（prompts/ フォルダにファイルがあるか、data/manifest.json のファイル名が正しいか確認してください）';
+      '（entries/ フォルダにファイルがあるか、data/manifest.json のファイル名が正しいか確認してください）';
     el.skipped.hidden = false;
   }
 
@@ -558,21 +520,21 @@
 
     fetchJson('data/manifest.json')
       .then(function (manifest) {
-        var files = Array.isArray(manifest && manifest.prompts) ? manifest.prompts : [];
+        var files = Array.isArray(manifest && manifest.entries) ? manifest.entries : [];
         if (files.length === 0) {
-          throw new Error('data/manifest.json に prompts が1件も登録されていません。');
+          throw new Error('data/manifest.json の entries にファイルが1件も登録されていません。');
         }
-        return Promise.all([loadPrompts(files), loadDefinitions()]);
+        return Promise.all([loadEntries(files), loadDefinitions()]);
       })
       .then(function (results) {
         var loaded = results[0];
         var definitions = results[1];
 
-        if (loaded.prompts.length === 0) {
-          throw new Error('prompts/ フォルダから Markdown を1件も読み込めませんでした。');
+        if (loaded.entries.length === 0) {
+          throw new Error('entries/ フォルダから Markdown を1件も読み込めませんでした。');
         }
 
-        state.prompts = loaded.prompts;
+        state.entries = loaded.entries;
         state.categories = collectCategories(definitions.categories);
         state.tags = collectTags(definitions.tags);
 

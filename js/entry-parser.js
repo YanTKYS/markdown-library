@@ -1,9 +1,12 @@
 /*
- * Prompt Library — Markdown の解析・生成ロジック（共有）
- * app.js（一覧・詳細表示）と editor.html（作成・編集）の両方から利用する。
+ * Markdown Library — エントリ（1ファイル＝1エントリ）の解析・生成ロジック（共有）
+ * app.js（一覧・詳細表示）と editor.js（作成・編集）の両方から利用する。
  * 解析と生成を同じ仕様に保つため、ロジックはこの1ファイルにまとめる。
+ *
+ * エントリは「front matter ＋ Markdown 本文」で構成する。
+ * 本文の書き方には決まりを設けず、front matter を除いた部分をそのまま本文として扱う。
  */
-var PromptParser = (function () {
+var EntryParser = (function () {
   'use strict';
 
   // ---------------------------------------------------------------
@@ -67,56 +70,10 @@ var PromptParser = (function () {
     return { meta: meta, body: text.slice(match[0].length) };
   }
 
-  // 「## 見出し」の行なら見出し文字列を返す。「###」以下は本文の一部として扱う。
-  function headingText(line) {
-    var match = /^##[ \t]+(.+?)[ \t]*$/.exec(line);
-    return match ? match[1] : null;
-  }
-
-  function findHeading(lines, name) {
-    for (var i = 0; i < lines.length; i++) {
-      if (headingText(lines[i]) === name) return i;
-    }
-    return -1;
-  }
-
-  /*
-   * 本文から「使い方」と「プロンプト」を取り出す。
-   * プロンプトは「## プロンプト」の次の行から Markdown 末尾までとする。
-   * プロンプト自体が「## 前提条件」「## 出力形式」のように見出しで構造化されて
-   * いても欠けないようにするため、途中の見出しでは区切らない。
-   * その代わり「使い方」は「## プロンプト」より前に置く決まりとする。
-   */
-  function parseBody(body) {
-    var lines = body.split('\n');
-    var promptIndex = findHeading(lines, 'プロンプト');
-
-    var prompt = promptIndex === -1 ? '' : lines.slice(promptIndex + 1).join('\n').trim();
-    var head = promptIndex === -1 ? lines : lines.slice(0, promptIndex);
-
-    var usage = '';
-    var usageIndex = findHeading(head, '使い方');
-    if (usageIndex !== -1) {
-      var rest = head.slice(usageIndex + 1);
-      var end = rest.length;
-      for (var i = 0; i < rest.length; i++) {
-        if (headingText(rest[i]) !== null) { end = i; break; }
-      }
-      usage = rest.slice(0, end).join('\n').trim();
-    }
-
-    return { usage: usage, prompt: prompt };
-  }
-
-  // プロンプト全体がコードフェンスで囲まれている場合だけ、その囲みを外す。
-  // 本文中にもフェンスがある場合は構造を壊すため、何もしない。
-  function stripOuterFence(text) {
-    var lines = text.split('\n');
-    var fences = lines.filter(function (line) { return /^```/.test(line); }).length;
-    if (fences === 2 && /^```/.test(lines[0]) && /^```\s*$/.test(lines[lines.length - 1])) {
-      return lines.slice(1, -1).join('\n').trim();
-    }
-    return text;
+  // 本文の前後にある空行・末尾の空白だけを取り除く。
+  // 1行目の字下げなど本文の中身には手を付けない。
+  function trimBody(text) {
+    return String(text || '').replace(/^\n+/, '').replace(/\s+$/, '');
   }
 
   /*
@@ -135,25 +92,16 @@ var PromptParser = (function () {
     return [String(value).trim()];
   }
 
-  // テキスト全体を解析する。BOM・改行コードの正規化もここで行う。
+  /*
+   * テキスト全体を解析する。BOM・改行コードの正規化もここで行う。
+   * 戻り値: { meta: front matter の値, body: front matter を除いた Markdown 本文 }
+   */
   function parse(rawText) {
     var normalized = String(rawText || '').replace(/^\uFEFF/, '').replace(/\r\n?/g, '\n');
     var fm = parseFrontMatter(normalized);
-    var body = parseBody(fm.body);
-
-    var promptBody = body.prompt;
-    var hasPromptSection = promptBody !== '';
-    if (!hasPromptSection) {
-      // 「## プロンプト」が無い場合は、H1 見出しを除いた本文全体をコピー対象とする。
-      promptBody = fm.body.replace(/^\s*#[ \t]+.*\n/, '').trim();
-    }
-
     return {
       meta: fm.meta,
-      rawBody: fm.body,
-      usage: body.usage,
-      prompt: stripOuterFence(promptBody),
-      hasPromptSection: hasPromptSection
+      body: trimBody(fm.body)
     };
   }
 
@@ -175,15 +123,15 @@ var PromptParser = (function () {
 
   /*
    * フォーム入力から Markdown 全文を生成する。
-   * fields: { title, category, tags(配列), description, usage, prompt }
-   * README.md「front matter の記述方法」「本文の構成」に記載の形式に合わせる。
+   * fields: { title, category, tags(配列), description, body }
+   * 本文は利用者が入力したものをそのまま front matter の後ろに置く。
+   * 見出し等を自動で書き足すことはしない。
    */
   function buildMarkdown(fields) {
     var title = String(fields.title || '').trim();
     var category = String(fields.category || '').trim();
     var description = String(fields.description || '').trim();
-    var usage = String(fields.usage || '').trim();
-    var prompt = String(fields.prompt || '').trim();
+    var body = trimBody(String(fields.body || '').replace(/\r\n?/g, '\n'));
     var tags = (fields.tags || []).map(function (t) { return String(t).trim(); })
       .filter(function (t) { return t !== ''; });
 
@@ -197,13 +145,7 @@ var PromptParser = (function () {
     fm += 'description: ' + quoteScalar(description) + '\n';
     fm += '---\n';
 
-    var body = '\n# ' + title + '\n';
-    if (usage !== '') {
-      body += '\n## 使い方\n\n' + usage + '\n';
-    }
-    body += '\n## プロンプト\n\n' + prompt + '\n';
-
-    return fm + body;
+    return body === '' ? fm : fm + '\n' + body + '\n';
   }
 
   // 外から使うのはこの4つだけ。ほかは内部の補助関数として閉じておく。
