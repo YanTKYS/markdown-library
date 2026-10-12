@@ -245,15 +245,18 @@
 
   // 一覧画面の詳細表示と同じ見た目・同じレンダラーで本文を表示する。
   function renderPreviewDetail(fields) {
+    // 閲覧画面（app.js の renderDetail）と同じ順序・同じクラスで表示する。
     var html = '<header class="detail-header">' +
-      '<span class="card-category">' + esc(fields.category || '(カテゴリ未設定)') + '</span>' +
       '<h2 class="detail-title">' + esc(fields.title || '(無題)') + '</h2>' +
       (fields.description ? '<p class="detail-description">' + esc(fields.description) + '</p>' : '') +
-      (fields.tags.length
-        ? '<div class="detail-tags">' + fields.tags.map(function (t) {
-            return '<span class="tag">#' + esc(t) + '</span>';
-          }).join('') + '</div>'
-        : '') +
+      '<dl class="detail-meta">' +
+        '<div class="detail-meta-row"><dt>カテゴリ</dt><dd>' + esc(fields.category || '(カテゴリ未設定)') + '</dd></div>' +
+        (fields.tags.length
+          ? '<div class="detail-meta-row"><dt>タグ</dt><dd class="detail-tags">' + fields.tags.map(function (t) {
+              return '<span class="tag">#' + esc(t) + '</span>';
+            }).join('') + '</dd></div>'
+          : '') +
+      '</dl>' +
       '</header>';
 
     html += fields.body.trim() !== ''
@@ -277,8 +280,10 @@
     if (filename !== '' && errorMessage !== '') {
       el.filenameError.textContent = errorMessage;
       el.filenameError.hidden = false;
+      el.filename.setAttribute('aria-invalid', 'true');
     } else {
       el.filenameError.hidden = true;
+      el.filename.removeAttribute('aria-invalid');
     }
 
     var ready = fields.title !== '' && fields.category !== '' &&

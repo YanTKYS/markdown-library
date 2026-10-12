@@ -13,9 +13,9 @@
   <div class="container site-header-inner">
     <div class="site-header-text">
       <h1 class="site-title">Markdown Library</h1>
-      <p class="site-lead">業務で再利用できるMarkdown形式のナレッジを共有しています。使いたいものを選んで、詳細画面からコピーしてください。</p>
+      <p class="site-lead">業務で再利用できるMarkdown形式のナレッジを共有しています。</p>
     </div>
-    <a class="button button-cta" href="editor.html">＋ Markdownを追加</a>
+    <a class="button button-secondary" href="editor.html">＋ Markdownを追加</a>
   </div>
 </header>
 
@@ -28,30 +28,33 @@
     <!-- 一覧 -->
     <div id="list-view">
 
-      <p id="skipped" class="notice" hidden></p>
+      <p id="skipped" class="notice notice-warning" hidden></p>
 
       <div class="search-box">
         <label class="search-label" for="search">キーワード検索</label>
-        <input id="search" class="search-input" type="search" autocomplete="off"
-               placeholder="例: 議事録　PlantUML　住民" aria-describedby="search-hint">
-        <p id="search-hint" class="search-hint">
-          タイトル・説明・カテゴリ・タグ・本文をまとめて検索します。空白で区切るとすべてを含むものに絞り込みます。
+        <p id="search-hint" class="support-text">
+          タイトル・説明・カテゴリ・タグ・本文をまとめて検索します。空白で区切ると、すべてを含むものに絞り込みます。
         </p>
+        <input id="search" class="input search-input" type="search" autocomplete="off"
+               placeholder="例: 議事録　PlantUML　住民" aria-describedby="search-hint">
       </div>
 
-      <section class="filter-group">
-        <h2 class="filter-title">カテゴリ<span class="filter-note">業務領域による大分類。1つだけ選べます。</span></h2>
+      <div class="filter-group">
+        <h2 class="filter-title">カテゴリ</h2>
+        <p class="support-text">業務領域による大分類です。1つだけ選べます。</p>
         <div id="category-filter" class="chips"></div>
-      </section>
+      </div>
 
-      <section class="filter-group">
-        <h2 class="filter-title">タグ<span class="filter-note">用途・形式・対象による分類。選ぶほど絞り込まれます。</span></h2>
+      <div class="filter-group">
+        <h2 class="filter-title">タグ</h2>
+        <p class="support-text">用途・形式・対象による分類です。選ぶほど絞り込まれます。</p>
         <div id="tag-filter" class="chips"></div>
-      </section>
+      </div>
 
       <div id="active-filters" class="active-filters" hidden></div>
 
       <div class="results-header">
+        <h2 class="results-title">Markdown一覧</h2>
         <span id="count" class="count"></span>
       </div>
 

@@ -8,17 +8,19 @@
 <link rel="stylesheet" href="css/style.css">
 <link rel="stylesheet" href="css/editor.css">
 </head>
-<body>
+<body class="page-editor">
 
 <header class="site-header">
-  <div class="container">
-    <a class="back-link" href="index.html">← Markdown Library に戻る</a>
-    <h1 class="site-title">Markdownエディタ</h1>
-    <p class="site-lead">タイトルやカテゴリなどの設定（front matter）を手書きせずに、Markdown の作成・編集を行うための支援ツールです。</p>
+  <div class="container site-header-inner">
+    <p class="site-title"><a href="index.html">Markdown Library</a></p>
+    <a class="button button-secondary" href="index.html">← 一覧に戻る</a>
   </div>
 </header>
 
 <main class="container editor-main">
+
+  <h1 class="page-title">Markdownエディタ</h1>
+  <p class="page-lead">タイトルやカテゴリなどの設定（front matter）を手書きせずに、Markdown の作成・編集を行うための支援ツールです。</p>
 
   <div class="notice">
     このツールは Markdown の作成・編集を支援するだけです。GitHub や公開サーバへの反映は行いません。
@@ -26,9 +28,9 @@
     <code>data/manifest.json</code> にファイル名を登録してください（詳しい手順は README.md を参照）。
   </div>
 
-  <section class="editor-section">
+  <section class="load-section">
     <div class="load-row">
-      <button type="button" id="btn-new" class="button button-quiet">新しい Markdown を作成</button>
+      <button type="button" id="btn-new" class="button button-secondary">新しい Markdown を作成</button>
       <span id="load-status" class="load-status" role="status"></span>
     </div>
     <details class="aux-load">
@@ -42,50 +44,66 @@
 
   <div class="editor-grid">
 
-    <section class="editor-section form-section">
-      <h2 class="editor-section-title">編集</h2>
+    <section class="form-section">
+      <h2 class="section-title">編集</h2>
 
       <div class="field">
-        <label for="f-title">タイトル <span class="req">必須</span></label>
-        <input type="text" id="f-title" maxlength="60" autocomplete="off">
+        <label class="field-label" for="f-title">タイトル<span class="req">必須</span></label>
+        <p id="title-hint" class="support-text">一覧と詳細画面の見出しになります。30字程度まで。</p>
+        <input type="text" id="f-title" class="input" maxlength="60" autocomplete="off" aria-describedby="title-hint">
       </div>
 
-      <div class="field">
-        <span class="field-label">カテゴリ <span class="req">必須</span><span class="field-note">data/tags.json 内の定義から1つだけ選べます。分類の追加・変更は管理側の作業です。</span></span>
+      <div class="field" role="group" aria-labelledby="category-label" aria-describedby="category-hint">
+        <span id="category-label" class="field-label">カテゴリ<span class="req">必須</span></span>
+        <p id="category-hint" class="support-text">data/tags.json 内の定義から1つだけ選べます。分類の追加・変更は管理側の作業です。</p>
         <div id="category-chips" class="chips"></div>
         <p id="category-warning" class="field-warning" hidden></p>
       </div>
 
-      <div class="field">
-        <span class="field-label">タグ<span class="field-note">data/tags.json 内の定義から複数選択できます。分類の追加・変更は管理側の作業です。</span></span>
+      <div class="field" role="group" aria-labelledby="tag-label" aria-describedby="tag-hint">
+        <span id="tag-label" class="field-label">タグ<span class="opt">任意</span></span>
+        <p id="tag-hint" class="support-text">data/tags.json 内の定義から複数選択できます。分類の追加・変更は管理側の作業です。</p>
         <div id="tag-chips" class="chips"></div>
         <p id="tag-warning" class="field-warning" hidden></p>
       </div>
 
       <div class="field">
-        <label for="f-description">説明 <span class="req">必須</span><span class="field-note">一覧カードに出る1行説明。40字程度まで。</span></label>
-        <input type="text" id="f-description" maxlength="80" autocomplete="off">
+        <label class="field-label" for="f-description">説明<span class="req">必須</span></label>
+        <p id="description-hint" class="support-text">一覧に表示される1行の説明です。40字程度まで。</p>
+        <input type="text" id="f-description" class="input" maxlength="80" autocomplete="off" aria-describedby="description-hint">
       </div>
 
       <div class="field">
-        <label for="f-body">Markdown本文 <span class="req">必須</span><span class="field-note">入力した内容がそのまま本文として保存されます。見出し（<code>#</code>）・箇条書き（<code>-</code> / <code>1.</code>）・太字（<code>**</code>）・コード（<code>`</code>）・コードブロック（<code>```言語名</code>）が使えます。コードブロックは閲覧画面でブロックごとにコピーできるため、生成AIへ渡す文面やPlantUMLなどのコードは <code>```text</code> や <code>```plantuml</code> で囲んでください。</span></label>
-        <textarea id="f-body" rows="22" spellcheck="false" placeholder="## 使い方&#10;&#10;説明を書きます。&#10;&#10;```text&#10;コピーして使う文面やコード&#10;```"></textarea>
+        <label class="field-label" for="f-body">Markdown本文<span class="req">必須</span></label>
+        <p id="body-hint" class="support-text">
+          入力した内容がそのまま本文として保存されます。見出し（<code>#</code>）・箇条書き（<code>-</code> / <code>1.</code>）・太字（<code>**</code>）・コード（<code>`</code>）・コードブロック（<code>```言語名</code>）が使えます。
+        </p>
+        <p id="body-hint-code" class="support-text">
+          生成AIへ渡す文面や PlantUML などのコードは、<code>```text</code> や <code>```plantuml</code> で囲むと、閲覧画面でブロックごとにコピーできます。
+        </p>
+        <textarea id="f-body" class="input" rows="22" spellcheck="false" aria-describedby="body-hint body-hint-code" placeholder="## 使い方&#10;&#10;説明を書きます。&#10;&#10;```text&#10;コピーして使う文面やコード&#10;```"></textarea>
       </div>
 
       <div class="field">
-        <label for="f-filename">保存ファイル名 <span class="req">必須</span><span class="field-note">末尾は「.md」にしてください。日本語も使えます。<code>\ / : * ? " &lt; &gt; |</code> や制御文字、Windows の予約名（CON・PRN・NUL など）は使用できません。</span></label>
-        <input type="text" id="f-filename" placeholder="例: 会議メモから議事録を作成.md" autocomplete="off">
+        <label class="field-label" for="f-filename">保存ファイル名<span class="req">必須</span></label>
+        <p id="filename-hint" class="support-text">
+          末尾は「.md」にしてください。日本語も使えます。<code>\ / : * ? " &lt; &gt; |</code> や制御文字、Windows の予約名（CON・PRN・NUL など）は使用できません。
+        </p>
+        <input type="text" id="f-filename" class="input" placeholder="例: 会議メモから議事録を作成.md" autocomplete="off" aria-describedby="filename-hint filename-error">
         <p id="filename-error" class="field-error" hidden></p>
       </div>
     </section>
 
-    <section class="editor-section preview-section">
-      <h2 class="editor-section-title">プレビュー</h2>
+    <section class="preview-section">
+      <h2 class="section-title">プレビュー</h2>
       <article id="preview-detail" class="detail preview-detail"></article>
 
-      <h3 class="raw-heading">生成される Markdown</h3>
-      <textarea id="raw-output" class="raw-output" readonly rows="16" aria-label="生成される Markdown"></textarea>
+      <h2 class="section-title">Markdown出力</h2>
+      <p class="support-text">保存される Markdown 全文（front matter ＋ 本文）です。</p>
+      <textarea id="raw-output" class="input raw-output" readonly rows="16" aria-label="生成される Markdown"></textarea>
 
+      <h2 class="section-title">保存</h2>
+      <p class="support-text">必須項目（タイトル・カテゴリ・説明・本文・保存ファイル名）をすべて入力すると、ダウンロードできます。</p>
       <div class="save-row">
         <button type="button" id="btn-download" class="button button-primary" disabled>.md ファイルをダウンロード</button>
       </div>

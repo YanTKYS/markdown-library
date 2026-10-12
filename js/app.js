@@ -192,31 +192,35 @@
     }
 
     // 一覧は探すことを優先し、コピー操作は詳細画面にまとめる。
+    // 主役はタイトル。カテゴリ・タグは補助情報として下にまとめる。
     el.results.innerHTML = results.map(function (entry) {
-      return '<article class="card">' +
-        '<a class="card-main" href="#' + encodeURIComponent(entry.id) + '">' +
-          '<span class="card-category">' + esc(entry.category) + '</span>' +
-          '<h3 class="card-title">' + esc(entry.title) + '</h3>' +
-          '<p class="card-description">' + esc(entry.description) + '</p>' +
-        '</a>' +
-        (entry.tags.length
-          ? '<div class="card-footer"><div class="card-tags">' + tagButtons(entry.tags) + '</div></div>'
-          : '') +
+      return '<article class="entry">' +
+        '<h3 class="entry-title"><a href="#' + encodeURIComponent(entry.id) + '">' + esc(entry.title) + '</a></h3>' +
+        (entry.description ? '<p class="entry-description">' + esc(entry.description) + '</p>' : '') +
+        '<div class="entry-meta">' +
+          '<span class="entry-category"><span class="sr-only">カテゴリ: </span>' + esc(entry.category) + '</span>' +
+          (entry.tags.length ? '<div class="entry-tags">' + tagButtons(entry.tags) + '</div>' : '') +
+        '</div>' +
       '</article>';
     }).join('');
   }
 
   function renderDetail(entry) {
+    // 文書として読めるよう、タイトル → 説明 → カテゴリ・タグ → 操作 → 本文 の順に並べる。
     var html = '<a class="back-link" href="#">← 一覧に戻る</a>' +
       '<header class="detail-header">' +
-        '<span class="card-category">' + esc(entry.category) + '</span>' +
         '<h2 class="detail-title">' + esc(entry.title) + '</h2>' +
         (entry.description ? '<p class="detail-description">' + esc(entry.description) + '</p>' : '') +
-        (entry.tags.length ? '<div class="detail-tags">' + tagButtons(entry.tags) + '</div>' : '') +
+        '<dl class="detail-meta">' +
+          '<div class="detail-meta-row"><dt>カテゴリ</dt><dd>' + esc(entry.category) + '</dd></div>' +
+          (entry.tags.length
+            ? '<div class="detail-meta-row"><dt>タグ</dt><dd class="detail-tags">' + tagButtons(entry.tags) + '</dd></div>'
+            : '') +
+        '</dl>' +
       '</header>' +
       '<div class="detail-actions">' +
         '<button type="button" class="button button-primary" data-copy-entry="' + esc(entry.id) + '">Markdownをコピー</button>' +
-        '<a class="button button-quiet" href="editor.html?file=' + encodeURIComponent(entry.file) + '">このMarkdownを編集</a>' +
+        '<a class="button button-text" href="editor.html?file=' + encodeURIComponent(entry.file) + '">このMarkdownを編集</a>' +
         '<p class="detail-actions-note">「Markdownをコピー」は本文全体をコピーします。' +
           '<span class="code-hint" hidden>コードブロックの「コピー」では、そのブロックの内容だけをコピーできます。</span></p>' +
       '</div>' +
@@ -439,7 +443,7 @@
 
   function showError(message) {
     el.status.innerHTML = '<div class="error">' +
-      '<p><strong>Markdown を読み込めませんでした。</strong></p>' +
+      '<p class="error-title">エラー：Markdown を読み込めませんでした。</p>' +
       '<p>' + esc(message) + '</p>' +
       '<p class="error-hint">index.html をファイルとして直接開いた場合は動作しません。' +
       'IIS などの Web サーバに配置してから開いてください。' +
