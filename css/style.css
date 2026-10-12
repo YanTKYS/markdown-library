@@ -1,46 +1,114 @@
-/* Markdown Library — 画面スタイル（外部フォント・CDN 不使用） */
+/*
+ * Markdown Library — 画面共通スタイル（外部フォント・CDN 不使用）
+ *
+ * 業務で「検索して、読んで、再利用する」ための実用サイトとして、
+ * 装飾を抑え、情報の階層・余白・操作の重要度で構成する。
+ * デジタル庁デザインシステム（DADS）の設計思想（階層・可読性・規則的な余白・
+ * ボタンの役割分担・フォーカスの視認性）を、この規模に必要な分だけ取り入れている。
+ *
+ * 目次
+ *   1. デザイントークン
+ *   2. 基本
+ *   3. レイアウト（ヘッダー・フッター）
+ *   4. 部品（リンク・ボタン・フォーム・通知・チップ・タグ）
+ *   5. 一覧画面
+ *   6. 詳細画面・Markdown 本文
+ *   7. 補助・レスポンシブ
+ */
+
+/* ---------- 1. デザイントークン ---------- */
 
 :root {
-  --ink: #1c2530;
-  --ink-soft: #5b6773;
-  --line: #d8dee5;
-  --line-soft: #e8ecf0;
-  --bg: #f4f6f8;
-  --panel: #ffffff;
-  --accent: #14548c;
+  /* 色: 白地・濃い文字・控えめな罫線を基本とし、アクセントは「リンクと主要操作」に限る */
+  --ink: #1a1a1a;          /* 本文 */
+  --ink-soft: #595959;     /* 補助情報（白地で 7:1） */
+  --line: #d9d9d9;         /* 区切りの罫線 */
+  --border: #767676;       /* 入力欄・操作部品の枠線（白地で 4.5:1） */
+  --surface: #f5f5f5;      /* コードや通知などの薄い面 */
+  --accent: #14548c;       /* リンク・主要操作（白地で 7.9:1） */
   --accent-dark: #0e3f6b;
-  --accent-soft: #e7f0f8;
-  --radius: 6px;
+  --accent-tint: #e8f0f7;
+  --danger: #b3261e;
+  --danger-tint: #fdf0ef;
+  --success: #1d6b3f;
+  --success-tint: #eaf5ee;
+  --warning-ink: #5c4400;
+  --warning-line: #b78103;
+  --warning-tint: #fff8e1;
+  --focus-ink: #1a1a1a;
+  --focus-ring: #ffd43d;
+
+  /* 余白: 4px を最小に 8px 基準で段階を限る（rem で文字サイズ設定に追従） */
+  --s1: 0.25rem;  /*  4px */
+  --s2: 0.5rem;   /*  8px */
+  --s3: 1rem;     /* 16px */
+  --s4: 1.5rem;   /* 24px */
+  --s5: 2rem;     /* 32px */
+  --s6: 3rem;     /* 48px */
+
+  /* 文字サイズ（14 / 16 / 18 / 20 / 24 / 28px） */
+  --fs-small: 0.875rem;
+  --fs-base: 1rem;
+  --fs-lg: 1.125rem;
+  --fs-xl: 1.25rem;
+  --fs-2xl: 1.5rem;
+  --fs-3xl: 1.75rem;
+
+  /* 角丸は「操作部品」だけ。面・コード・通知は角を丸めない */
+  --radius-control: 4px;
+  --radius-tag: 2px;
+
+  --tap: 2.75rem;  /* 44px: 押しやすさの基準 */
+
+  /* 外部フォントは使わず、各 OS に標準で入っている日本語フォントを使う */
+  --font-sans: "Noto Sans JP", "Hiragino Sans", "Hiragino Kaku Gothic ProN",
+    "BIZ UDPGothic", "Yu Gothic UI", "Meiryo UI", "Meiryo", sans-serif;
+  --font-mono: ui-monospace, "Cascadia Mono", "Consolas", "BIZ UDGothic",
+    "Menlo", "Osaka-Mono", "MS Gothic", monospace;
 }
+
+/* ---------- 2. 基本 ---------- */
 
 * { box-sizing: border-box; }
 
-/* hidden 属性を .active-filters などの display 指定より優先させる */
+/* hidden 属性を display 指定より優先させる */
 [hidden] { display: none !important; }
 
-html { scroll-behavior: smooth; }
+html { -webkit-text-size-adjust: 100%; }
+
+@media (prefers-reduced-motion: no-preference) {
+  html { scroll-behavior: smooth; }
+}
 
 body {
   margin: 0;
-  background: var(--bg);
+  background: #fff;
   color: var(--ink);
-  font-family: "Meiryo", "Yu Gothic UI", "Yu Gothic", "Hiragino Kaku Gothic ProN", sans-serif;
-  font-size: 15px;
-  line-height: 1.75;
+  font-family: var(--font-sans);
+  font-size: var(--fs-base);
+  line-height: 1.7;
 }
+
+/* フォーカスは常に表示する（キーボード操作）。黄色の内側＋黒の外側で、どの背景でも見える */
+:focus-visible {
+  outline: 3px solid var(--focus-ink);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 2px var(--focus-ring);
+}
+
+/* 詳細を開いたときにフォーカスを移すが、輪郭線は表示しない */
+.detail:focus { outline: none; box-shadow: none; }
+
+/* ---------- 3. レイアウト ---------- */
 
 .container {
-  max-width: 1000px;
+  max-width: 60rem;
   margin: 0 auto;
-  padding: 0 20px;
+  padding: 0 var(--s4);
 }
 
-/* ---------- ヘッダー / フッター ---------- */
-
 .site-header {
-  background: var(--accent);
-  color: #fff;
-  padding: 18px 0;
+  border-bottom: 1px solid var(--line);
 }
 
 .site-header-inner {
@@ -48,467 +116,549 @@ body {
   align-items: center;
   justify-content: space-between;
   flex-wrap: wrap;
-  gap: 12px;
+  gap: var(--s2) var(--s4);
+  padding-top: var(--s3);
+  padding-bottom: var(--s3);
 }
 
 .site-title {
   margin: 0;
-  font-size: 20px;
-  letter-spacing: .02em;
+  font-size: var(--fs-2xl);
+  font-weight: 700;
+  line-height: 1.4;
 }
 
-.site-lead {
-  margin: 4px 0 0;
-  font-size: 13px;
-  color: #d6e5f2;
-}
-
-/* ヘッダー上の主要導線（Markdown を追加する） */
-.button-cta {
-  flex-shrink: 0;
-  padding: 10px 18px;
-  font-size: 14px;
-  font-weight: bold;
-  background: #fff;
-  border: 1px solid #fff;
-  color: var(--accent-dark);
+.site-title a {
+  color: inherit;
   text-decoration: none;
 }
 
-.button-cta:hover { background: #eef4fa; }
+.site-title a:hover { text-decoration: underline; }
 
-.button-cta:focus-visible {
-  outline: 2px solid #fff;
-  outline-offset: 2px;
+.site-lead {
+  margin: var(--s1) 0 0;
+  font-size: var(--fs-small);
+  color: var(--ink-soft);
 }
 
 .site-footer {
-  margin-top: 48px;
-  padding: 16px 0 32px;
+  margin-top: var(--s6);
+  padding: var(--s3) 0 var(--s5);
   border-top: 1px solid var(--line);
   color: var(--ink-soft);
-  font-size: 12px;
+  font-size: var(--fs-small);
 }
 
 .site-footer p { margin: 0; }
 
 kbd {
-  border: 1px solid var(--line);
-  border-bottom-width: 2px;
-  border-radius: 4px;
-  padding: 0 5px;
-  background: #fff;
+  padding: 0 var(--s2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-tag);
   font-family: inherit;
-  font-size: 11px;
+  font-size: var(--fs-small);
+  background: #fff;
+  color: var(--ink);
 }
 
-/* ---------- 状態表示 ---------- */
+/* ---------- 4. 部品 ---------- */
+
+/* リンク: 常に下線を付け、色だけに頼らない */
+a {
+  color: var(--accent);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.2em;
+}
+
+a:hover {
+  color: var(--accent-dark);
+  text-decoration-thickness: 3px;
+}
+
+/* ボタン: 塗り（主要操作）／枠線（副次）／文字のみ（補助）の3段階 */
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: var(--tap);
+  padding: 0 var(--s3);
+  font: inherit;
+  font-weight: 700;
+  line-height: 1.4;
+  white-space: nowrap;
+  text-decoration: none;
+  border: 1px solid transparent;
+  border-radius: var(--radius-control);
+  cursor: pointer;
+}
+
+.button:hover { text-decoration: none; }
+
+.button-primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+
+.button-primary:hover { background: var(--accent-dark); border-color: var(--accent-dark); color: #fff; }
+
+.button-secondary {
+  background: #fff;
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.button-secondary:hover { background: var(--accent-tint); color: var(--accent-dark); }
+
+.button-text {
+  padding: 0 var(--s2);
+  background: none;
+  color: var(--accent);
+  font-weight: 400;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.2em;
+}
+
+.button-text:hover {
+  color: var(--accent-dark);
+  text-decoration: underline;
+  text-decoration-thickness: 3px;
+}
+
+/* 本文中の操作（コードブロックのコピーなど）に使う小さめの枠線ボタン */
+.button-quiet {
+  min-height: 2rem;
+  padding: 0 var(--s3);
+  font-size: var(--fs-small);
+  font-weight: 400;
+  background: #fff;
+  border-color: var(--border);
+  color: var(--ink);
+}
+
+.button-quiet:hover { border-color: var(--ink); background: var(--surface); color: var(--ink); }
+
+.button:disabled {
+  background: #e8e8e8;
+  border-color: var(--line);
+  color: var(--ink-soft);
+  cursor: not-allowed;
+}
+
+/* コピー済みなどの完了表示（文言も変わるため、色だけで伝えない） */
+.button.is-done {
+  background: var(--success);
+  border-color: var(--success);
+  color: #fff;
+}
+
+.button-quiet.is-done {
+  background: var(--success-tint);
+  border-color: var(--success);
+  color: var(--success);
+}
+
+/* コピーの結果で文言の長さが変わっても、ボタンの幅を動かさない */
+[data-copy-entry] { min-width: 11.5em; }
+.code-copy { min-width: 9.75em; }
+
+/* フォーム部品 */
+.input {
+  display: block;
+  width: 100%;
+  min-height: var(--tap);
+  padding: var(--s2) 0.75rem;
+  font: inherit;
+  line-height: 1.5;
+  color: var(--ink);
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-control);
+}
+
+.input:hover { border-color: var(--ink); }
+.input::placeholder { color: var(--ink-soft); opacity: 1; }
+
+.input[aria-invalid="true"] {
+  border-color: var(--danger);
+  box-shadow: inset 0 0 0 1px var(--danger);
+}
+
+.support-text {
+  margin: 0 0 var(--s2);
+  font-size: var(--fs-small);
+  line-height: 1.6;
+  color: var(--ink-soft);
+}
+
+/* 通知: 面の色だけでなく、先頭の語（注意・エラー）でも種類を伝える */
+.notice {
+  margin: 0 0 var(--s4);
+  padding: var(--s3);
+  background: var(--surface);
+  border: 1px solid var(--line);
+}
+
+.notice-warning {
+  background: var(--warning-tint);
+  border-color: var(--warning-line);
+  color: var(--ink);
+}
+
+.notice-warning::before {
+  content: "注意：";
+  font-weight: 700;
+  color: var(--warning-ink);
+}
 
 .status {
-  margin: 32px 0;
+  margin: var(--s5) 0;
   color: var(--ink-soft);
 }
 
 .error {
-  background: #fdf2f2;
-  border: 1px solid #e6b8b8;
-  border-left: 4px solid #b23b3b;
-  border-radius: var(--radius);
-  padding: 16px 20px;
-  color: #7a2626;
+  padding: var(--s3);
+  background: var(--danger-tint);
+  border: 1px solid var(--danger);
 }
 
-.error p { margin: 0 0 8px; }
+.error p { margin: 0 0 var(--s2); }
 .error p:last-child { margin-bottom: 0; }
-.error-hint { font-size: 13px; }
+.error-title { font-weight: 700; color: var(--danger); }
+.error-hint { font-size: var(--fs-small); }
 
-.notice {
-  margin: 0 0 10px;
-  padding: 8px 12px;
-  background: #fdf7e3;
-  border: 1px solid #e3d49a;
-  border-radius: var(--radius);
-  font-size: 13px;
-  color: #6b5514;
-}
-
-/* ---------- 検索 ---------- */
-
-.search-box {
-  margin: 24px 0 20px;
-}
-
-.search-label {
-  display: block;
-  font-size: 13px;
-  font-weight: bold;
-  margin-bottom: 6px;
-}
-
-.search-input {
-  width: 100%;
-  padding: 12px 14px;
-  font-size: 17px;
-  font-family: inherit;
-  color: var(--ink);
-  background: var(--panel);
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
-}
-
-.search-input:focus {
-  outline: 2px solid var(--accent);
-  outline-offset: 1px;
-  border-color: var(--accent);
-}
-
-.search-hint {
-  margin: 6px 0 0;
-  font-size: 12px;
-  color: var(--ink-soft);
-}
-
-/* ---------- 絞り込み ---------- */
-
-.filter-group { margin-bottom: 16px; }
-
-.filter-title {
-  margin: 0 0 8px;
-  font-size: 13px;
-  font-weight: bold;
-}
-
-.filter-note {
-  margin-left: 8px;
-  font-weight: normal;
-  color: var(--ink-soft);
-  font-size: 12px;
-}
-
+/* 絞り込みチップ。状態は色だけでなく、チェック印・太字・枠線の太さでも示す */
 .chips {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
+  gap: var(--s2);
 }
 
 .chip {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
   font: inherit;
-  font-size: 13px;
   line-height: 1.4;
-  cursor: pointer;
-  background: var(--panel);
   color: var(--ink);
-  border: 1px solid var(--line);
+  background: #fff;
+  border: 1px solid var(--border);
+  cursor: pointer;
 }
 
-/* カテゴリは四角い区分、タグは丸いピルにして役割の違いを見た目で示す */
-.chip-category {
-  padding: 6px 12px;
-  border-radius: var(--radius);
-}
+.chip:hover { border-color: var(--ink); background: var(--surface); }
 
-.chip-tag {
-  padding: 4px 11px;
-  border-radius: 999px;
-  font-size: 12px;
-}
-
-.chip:hover { border-color: var(--accent); color: var(--accent); }
-
-.chip:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 1px;
-}
-
-.chip.is-on {
-  background: var(--accent);
-  border-color: var(--accent);
-  color: #fff;
-  font-weight: bold;
-}
-
-.chip.is-on:hover { background: var(--accent-dark); color: #fff; }
-
-.chip.is-empty {
-  color: #a7b0b9;
-  background: #fafbfc;
+.chip.is-on::before {
+  content: "✓";
+  margin-right: var(--s1);
+  font-weight: 700;
 }
 
 .chip-count {
-  font-size: 11px;
+  margin-left: var(--s1);
+  font-size: var(--fs-small);
+  font-weight: 400;
   color: var(--ink-soft);
-  font-weight: normal;
 }
 
-.chip.is-on .chip-count { color: #cfe1f0; }
-.chip.is-empty .chip-count { color: #bcc4cc; }
+.chip-count::before { content: "("; }
+.chip-count::after { content: ")"; }
 
-/* ---------- 現在の絞り込み ---------- */
+/* カテゴリ: 1つだけ選ぶ区分。四角く、選択中は塗りつぶす */
+.chip-category {
+  min-height: 2.5rem;
+  padding: 0 var(--s3);
+  border-radius: var(--radius-control);
+}
 
+.chip-category.is-on {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+  font-weight: 700;
+}
+
+.chip-category.is-on:hover { background: var(--accent-dark); border-color: var(--accent-dark); }
+.chip-category.is-on .chip-count { color: inherit; }
+
+/* タグ: 複数選べる補助的な分類。小さく、選択中は枠線を太くして太字にする */
+.chip-tag {
+  min-height: 2rem;
+  padding: 0 0.625rem;
+  font-size: var(--fs-small);
+  border-color: var(--border);
+  border-radius: var(--radius-tag);
+}
+
+.chip-tag.is-on {
+  background: var(--accent-tint);
+  border-color: var(--accent);
+  box-shadow: inset 0 0 0 1px var(--accent);
+  color: var(--accent-dark);
+  font-weight: 700;
+}
+
+.chip-tag.is-on:hover { background: #d6e5f2; }
+
+/* 該当 0 件の選択肢（選べるが、結果は空になる）は破線で示す */
+.chip.is-empty {
+  border-style: dashed;
+  color: var(--ink-soft);
+}
+
+/* タグ表示（一覧・詳細）。押すとそのタグで絞り込む */
+.tag {
+  display: inline-block;
+  padding: 0 var(--s2);
+  font: inherit;
+  font-size: var(--fs-small);
+  line-height: 1.7;
+  color: var(--ink);
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-tag);
+}
+
+.tag-button { min-height: 1.75rem; cursor: pointer; }
+.tag-button:hover { border-color: var(--ink); background: var(--surface); }
+
+.link-button {
+  padding: 0 0 0 var(--s2);
+  font: inherit;
+  background: none;
+  border: none;
+  color: var(--accent);
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+  cursor: pointer;
+}
+
+.link-button:hover { color: var(--accent-dark); text-decoration-thickness: 3px; }
+
+/* ---------- 5. 一覧画面 ---------- */
+
+/* 検索: 見出し → 補足説明 → 入力欄 の順。入力欄は大きくしすぎない */
+.search-box {
+  max-width: 40rem;
+  margin: var(--s5) 0 var(--s4);
+}
+
+.search-label {
+  display: block;
+  margin-bottom: var(--s1);
+  font-size: var(--fs-lg);
+  font-weight: 700;
+}
+
+.filter-group { margin-bottom: var(--s4); }
+
+.filter-title {
+  margin: 0 0 var(--s1);
+  font-size: var(--fs-base);
+  line-height: 1.5;
+}
+
+/* 現在の絞り込み条件。面や色は付けず、解除できる語として並べる */
 .active-filters {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 8px;
-  margin: 16px 0;
-  padding: 10px 14px;
-  background: var(--accent-soft);
-  border: 1px solid #c7dcee;
-  border-radius: var(--radius);
+  gap: var(--s2);
+  margin: 0 0 var(--s3);
 }
 
 .active-label {
-  font-size: 12px;
-  font-weight: bold;
-  color: var(--accent-dark);
+  font-size: var(--fs-small);
+  font-weight: 700;
 }
 
 .active-item {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: var(--s2);
+  min-height: 2rem;
+  padding: 0 var(--s2) 0 0.75rem;
   font: inherit;
-  font-size: 12px;
-  padding: 3px 10px;
-  background: var(--panel);
-  border: 1px solid #b6cfe3;
-  border-radius: 999px;
-  color: var(--accent-dark);
+  font-size: var(--fs-small);
+  color: var(--ink);
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-tag);
   cursor: pointer;
 }
 
-.active-item:hover { background: #fff0f0; border-color: #d09a9a; color: #8a2b2b; }
-.active-x { font-size: 14px; line-height: 1; }
+.active-item:hover { border-color: var(--danger); background: var(--danger-tint); }
+.active-x { font-size: var(--fs-lg); line-height: 1; }
 
 .active-reset {
-  margin-left: auto;
+  min-height: 2rem;
+  padding: 0 var(--s2);
   font: inherit;
-  font-size: 12px;
-  padding: 3px 10px;
-  background: transparent;
-  border: 1px solid var(--accent);
-  border-radius: var(--radius);
-  color: var(--accent-dark);
+  font-size: var(--fs-small);
+  background: none;
+  border: none;
+  color: var(--accent);
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
   cursor: pointer;
 }
 
-.active-reset:hover { background: var(--accent); color: #fff; }
+.active-reset:hover { color: var(--accent-dark); text-decoration-thickness: 3px; }
 
-/* ---------- 一覧 ---------- */
-
+/* 一覧: 画像のないテキスト情報なので、枠を付けず罫線で区切る縦のリストにする */
 .results-header {
   display: flex;
   align-items: baseline;
-  margin: 18px 0 10px;
+  flex-wrap: wrap;
+  gap: var(--s1) var(--s3);
+  margin-top: var(--s5);
+  padding-top: var(--s4);
+  border-top: 1px solid var(--line);
 }
 
-.count { font-size: 13px; color: var(--ink-soft); }
-
-.results {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: 12px;
-}
-
-.card {
-  display: flex;
-  flex-direction: column;
-  background: var(--panel);
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
-}
-
-.card:hover { border-color: var(--accent); }
-
-.card-main {
-  display: block;
-  padding: 14px 16px 10px;
-  text-decoration: none;
-  color: inherit;
-  flex: 1;
-}
-
-.card-main:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: -2px;
-}
-
-.card-category {
-  display: inline-block;
-  font-size: 11px;
-  padding: 1px 8px;
-  border-radius: var(--radius);
-  background: var(--accent-soft);
-  color: var(--accent-dark);
-  border: 1px solid #c7dcee;
-}
-
-.card-title {
-  margin: 8px 0 4px;
-  font-size: 15px;
-  line-height: 1.5;
-  color: var(--accent-dark);
-}
-
-.card-main:hover .card-title { text-decoration: underline; }
-
-.card-description {
+.results-title {
   margin: 0;
-  font-size: 13px;
+  font-size: var(--fs-xl);
+  line-height: 1.5;
+}
+
+.count {
+  font-size: var(--fs-small);
   color: var(--ink-soft);
 }
 
-.card-footer {
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: 10px;
-  padding: 0 16px 12px;
+.entry {
+  position: relative;
+  padding: var(--s3) 0;
+  border-bottom: 1px solid var(--line);
 }
 
-.card-tags, .detail-tags {
+/* 主役はタイトル。リンクの当たりは行全体に広げ、タグなど他の操作はその上に出す */
+.entry-title {
+  margin: 0 0 var(--s1);
+  font-size: var(--fs-lg);
+  line-height: 1.5;
+}
+
+.entry-title a { font-weight: 700; }
+
+.entry-title a::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+}
+
+.entry:hover .entry-title a {
+  color: var(--accent-dark);
+  text-decoration-thickness: 3px;
+}
+
+.entry-description {
+  margin: 0 0 var(--s2);
+}
+
+.entry-meta {
+  position: relative;
   display: flex;
   flex-wrap: wrap;
-  gap: 4px;
-}
-
-.tag {
-  font-size: 11px;
-  padding: 1px 8px;
-  border-radius: 999px;
-  background: #f0f3f6;
-  border: 1px solid var(--line-soft);
+  align-items: center;
+  gap: var(--s2) var(--s3);
+  font-size: var(--fs-small);
   color: var(--ink-soft);
 }
 
-.tag-button {
-  font-family: inherit;
-  cursor: pointer;
-}
+.entry-category { font-weight: 700; }
 
-.tag-button:hover {
-  background: var(--accent-soft);
-  border-color: #c7dcee;
-  color: var(--accent-dark);
-}
-
-.tag-button:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 1px;
+.entry-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s1) var(--s2);
 }
 
 .empty {
-  grid-column: 1 / -1;
-  padding: 32px 0;
-  text-align: center;
+  margin: 0;
+  padding: var(--s5) 0;
   color: var(--ink-soft);
 }
 
-.link-button {
-  font: inherit;
-  background: none;
-  border: none;
-  padding: 0 0 0 6px;
-  color: var(--accent);
-  text-decoration: underline;
-  cursor: pointer;
+/* ---------- 6. 詳細画面・Markdown 本文 ---------- */
+
+/* 読みやすい行長（全角で 40 字前後）に抑える */
+.detail {
+  max-width: 50rem;
+  padding-bottom: var(--s3);
 }
-
-/* ---------- ボタン ---------- */
-
-.button {
-  display: inline-block;
-  font: inherit;
-  cursor: pointer;
-  border-radius: var(--radius);
-  white-space: nowrap;
-  text-decoration: none;
-}
-
-.button:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 2px;
-}
-
-.button-primary {
-  padding: 10px 22px;
-  font-size: 15px;
-  font-weight: bold;
-  background: var(--accent);
-  border: 1px solid var(--accent);
-  color: #fff;
-}
-
-.button-primary:hover { background: var(--accent-dark); }
-
-.button-quiet {
-  padding: 3px 12px;
-  font-size: 12px;
-  background: var(--panel);
-  border: 1px solid var(--line);
-  color: var(--accent-dark);
-}
-
-.button-quiet:hover { border-color: var(--accent); background: var(--accent-soft); }
-
-.button.is-done {
-  background: #1c6b45;
-  border-color: #1c6b45;
-  color: #fff;
-}
-
-/* ---------- 詳細 ---------- */
-
-.detail { padding-bottom: 8px; }
 
 .back-link {
   display: inline-block;
-  margin: 20px 0 12px;
-  font-size: 13px;
-  color: var(--accent);
+  margin: var(--s3) 0 var(--s2);
+  padding: var(--s2) 0;
 }
 
 .detail-header {
-  padding-bottom: 14px;
+  padding-bottom: var(--s4);
   border-bottom: 1px solid var(--line);
 }
 
 .detail-title {
-  margin: 8px 0 6px;
-  font-size: 22px;
-  line-height: 1.5;
+  margin: 0 0 var(--s3);
+  font-size: var(--fs-3xl);
+  line-height: 1.4;
 }
 
 .detail-description {
-  margin: 0 0 10px;
+  margin: 0 0 var(--s4);
+  font-size: var(--fs-lg);
+}
+
+.detail-meta { margin: 0; }
+
+.detail-meta-row {
+  display: flex;
+  align-items: baseline;
+  gap: var(--s3);
+  margin-bottom: var(--s2);
+}
+
+.detail-meta-row:last-child { margin-bottom: 0; }
+
+.detail-meta dt {
+  flex: 0 0 4.5em;
+  font-size: var(--fs-small);
+  font-weight: 700;
   color: var(--ink-soft);
 }
 
-/* 詳細画面の操作（Markdownをコピー・編集） */
+.detail-meta dd { margin: 0; }
+
+.detail-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s1) var(--s2);
+}
+
+/* 詳細画面の操作。コピーだけを塗りボタンにし、編集は文字のリンクにとどめる */
 .detail-actions {
   display: flex;
   align-items: center;
-  gap: 10px;
   flex-wrap: wrap;
-  margin: 16px 0 4px;
+  gap: var(--s2) var(--s3);
+  margin: var(--s4) 0 var(--s2);
 }
 
 .detail-actions-note {
   flex-basis: 100%;
   margin: 0;
-  font-size: 12px;
+  font-size: var(--fs-small);
   color: var(--ink-soft);
 }
 
-/* ---------- Markdown 本文 ---------- */
+/* 本文: 行間を広めにとり、見出しは太さと前後の余白で階層を示す */
 /* 見出しは文書構造上 h3〜h6 で出力し、見た目は元のレベル（md-h1〜md-h6）に合わせる */
-
 .markdown-body {
-  margin-top: 20px;
-  font-size: 14px;
+  margin-top: var(--s5);
+  line-height: 1.85;
   overflow-wrap: anywhere;
 }
 
@@ -518,61 +668,68 @@ kbd {
 .markdown-body h4,
 .markdown-body h5,
 .markdown-body h6 {
-  margin: 24px 0 8px;
+  margin: var(--s5) 0 var(--s2);
   line-height: 1.5;
 }
 
-.markdown-body .md-h1 { font-size: 19px; padding-bottom: 4px; border-bottom: 1px solid var(--line); }
-.markdown-body .md-h2 { font-size: 16px; padding-left: 9px; border-left: 4px solid var(--accent); }
-.markdown-body .md-h3 { font-size: 15px; }
-.markdown-body .md-h4,
-.markdown-body .md-h5,
-.markdown-body .md-h6 { font-size: 14px; }
-
-.markdown-body p { margin: 0 0 10px; }
-.markdown-body ul, .markdown-body ol { margin: 0 0 10px; padding-left: 1.6em; }
-.markdown-body li > ul, .markdown-body li > ol { margin-bottom: 0; }
-.markdown-body hr { margin: 20px 0; border: 0; border-top: 1px solid var(--line); }
-
-.markdown-body code {
-  background: #eef1f4;
-  border-radius: 3px;
-  padding: 1px 4px;
-  font-family: "Consolas", "Menlo", "Yu Gothic", monospace;
-  font-size: 13px;
+.markdown-body .md-h1 {
+  margin-top: var(--s6);
+  margin-bottom: var(--s3);
+  padding-bottom: var(--s2);
+  font-size: var(--fs-2xl);
+  border-bottom: 1px solid var(--line);
 }
 
-/* コードブロック（言語名とコピーボタン付き） */
+.markdown-body .md-h2 { margin-top: var(--s5); margin-bottom: var(--s2); font-size: var(--fs-xl); }
+.markdown-body .md-h3 { margin-top: var(--s4); font-size: var(--fs-lg); }
+.markdown-body .md-h4,
+.markdown-body .md-h5,
+.markdown-body .md-h6 { margin-top: var(--s4); font-size: var(--fs-base); }
+.markdown-body .md-h6 { color: var(--ink-soft); }
+
+.markdown-body p { margin: 0 0 var(--s3); }
+.markdown-body ul, .markdown-body ol { margin: 0 0 var(--s3); padding-left: 1.5em; }
+.markdown-body li { margin-bottom: var(--s1); }
+.markdown-body li > ul, .markdown-body li > ol { margin: var(--s1) 0 0; }
+.markdown-body hr { margin: var(--s5) 0; border: 0; border-top: 1px solid var(--line); }
+
+.markdown-body code {
+  padding: 0 var(--s1);
+  font-family: var(--font-mono);
+  font-size: 0.9em;
+  background: #ececec;
+  border-radius: var(--radius-tag);
+}
+
+/* コードブロック: 業務文書中の引用例として、薄い面と罫線で示す。言語名とコピーは上の帯に置く */
 .code-block {
-  margin: 0 0 14px;
-  background: var(--panel);
+  margin: 0 0 var(--s4);
+  background: var(--surface);
   border: 1px solid var(--line);
-  border-radius: var(--radius);
 }
 
 .code-block-bar {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 10px;
-  padding: 4px 8px 4px 14px;
-  background: #f7f9fb;
-  border-bottom: 1px solid var(--line-soft);
-  border-radius: var(--radius) var(--radius) 0 0;
+  gap: var(--s3);
+  padding: var(--s1) var(--s2) var(--s1) var(--s3);
+  border-bottom: 1px solid var(--line);
 }
 
 .code-lang {
-  font-family: "Consolas", "Menlo", "Yu Gothic", monospace;
-  font-size: 12px;
+  font-family: var(--font-mono);
+  font-size: var(--fs-small);
+  font-weight: 700;
   color: var(--ink-soft);
 }
 
 .code-block pre {
   margin: 0;
-  padding: 14px 18px;
-  font-family: "Consolas", "Menlo", "Yu Gothic", monospace;
-  font-size: 13.5px;
-  line-height: 1.85;
+  padding: var(--s3);
+  font-family: var(--font-mono);
+  font-size: 0.9375rem;
+  line-height: 1.8;
   white-space: pre-wrap;
   word-break: break-word;
   overflow-wrap: anywhere;
@@ -582,9 +739,10 @@ kbd {
   padding: 0;
   background: none;
   font-size: inherit;
+  border-radius: 0;
 }
 
-/* ---------- 補助 ---------- */
+/* ---------- 7. 補助・レスポンシブ ---------- */
 
 .sr-only {
   position: absolute;
@@ -599,10 +757,17 @@ kbd {
 }
 
 @media (max-width: 640px) {
-  .results { grid-template-columns: 1fr; }
-  .container { padding: 0 14px; }
-  .active-reset { margin-left: 0; }
+  .container { padding: 0 var(--s3); }
+  .site-title { font-size: var(--fs-xl); }
+  .detail-title { font-size: var(--fs-2xl); }
+  .markdown-body .md-h1 { font-size: var(--fs-xl); }
+  .markdown-body .md-h2 { font-size: var(--fs-lg); }
+  .detail-meta-row { flex-direction: column; gap: 0; }
+  .detail-meta dt { flex-basis: auto; }
+  .detail-actions [data-copy-entry] { flex: 1 1 100%; }
 }
 
-/* 詳細を開いたときにフォーカスを移すが、輪郭線は表示しない */
-.detail:focus { outline: none; }
+/* 強制カラー（高コントラストモード）でも枠線が消えないようにする */
+@media (forced-colors: active) {
+  .chip.is-on, .chip-tag.is-on { outline: 2px solid; }
+}

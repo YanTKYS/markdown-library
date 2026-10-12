@@ -1,182 +1,201 @@
-/* Markdown エディタ専用スタイル（style.css を前提に、フォーム・プレビューの分だけ追加する） */
+/*
+ * Markdown エディタ専用スタイル
+ * style.css のトークン・部品を前提に、フォームとプレビューの配置だけを追加する。
+ */
 
-.editor-main { padding-bottom: 40px; }
+/* 2 カラムを使うため、エディタだけ少し広げる */
+.page-editor .container { max-width: 75rem; }
 
-.back-link { display: inline-block; margin-bottom: 8px; }
+.editor-main { padding-bottom: var(--s5); }
 
-/* ヘッダー（濃い背景）の上に置くため、文字色を白にする */
-.site-header .back-link { color: #fff; margin-top: 0; }
-
-.editor-section { margin: 24px 0; }
-
-.editor-section-title {
-  margin: 0 0 12px;
-  font-size: 15px;
-  padding-left: 9px;
-  border-left: 4px solid var(--accent);
+.page-title {
+  margin: var(--s5) 0 var(--s2);
+  font-size: var(--fs-3xl);
+  line-height: 1.4;
 }
+
+.page-lead {
+  margin: 0 0 var(--s4);
+  color: var(--ink-soft);
+}
+
+/* 章見出し: 太さと下の罫線だけで区切る */
+.section-title {
+  margin: 0 0 var(--s3);
+  padding-bottom: var(--s2);
+  font-size: var(--fs-xl);
+  line-height: 1.5;
+  border-bottom: 1px solid var(--line);
+}
+
+.preview-section .section-title:not(:first-child) { margin-top: var(--s5); }
+
+/* 作成・読み込み */
+.load-section { margin-bottom: var(--s5); }
 
 .load-row {
   display: flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: 10px;
+  gap: var(--s2) var(--s3);
 }
 
-.file-label { display: inline-flex; align-items: center; }
-
 .load-status {
-  font-size: 13px;
+  font-size: var(--fs-small);
   color: var(--ink-soft);
 }
 
 /* 補助的な読み込み手段（ローカルファイルを直接開く）。主要導線にはしない。 */
 .aux-load {
-  margin-top: 10px;
-  font-size: 13px;
-  color: var(--ink-soft);
+  margin-top: var(--s2);
+  font-size: var(--fs-small);
 }
 
 .aux-load summary {
-  cursor: pointer;
+  display: inline-block;
+  padding: var(--s1) 0;
   color: var(--accent);
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+  cursor: pointer;
 }
 
-.aux-load .file-label { margin-top: 8px; }
+.aux-load summary:hover { color: var(--accent-dark); }
 
+.file-label { margin-top: var(--s2); }
+
+/* 編集＋プレビューの 2 カラム。狭い画面では 1 カラムにする */
 .editor-grid {
   display: grid;
-  grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
-  gap: 28px;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: var(--s6);
   align-items: start;
 }
 
-.field { margin-bottom: 18px; }
+/* フォーム: ラベル → 補足説明 → 入力欄 → エラー */
+.field { margin-bottom: var(--s5); }
 
-.field label,
 .field-label {
   display: block;
-  font-size: 13px;
-  font-weight: bold;
-  margin-bottom: 6px;
+  margin-bottom: var(--s1);
+  font-size: var(--fs-base);
+  font-weight: 700;
 }
 
-.req {
-  margin-left: 4px;
-  font-size: 11px;
-  font-weight: normal;
-  color: #b23b3b;
+.req,
+.opt {
+  margin-left: var(--s2);
+  font-size: var(--fs-small);
 }
 
-.field-note {
-  display: block;
-  margin-top: 2px;
-  font-weight: normal;
-  color: var(--ink-soft);
-  font-size: 12px;
-}
-
-.field input[type="text"],
-.field textarea {
-  width: 100%;
-  padding: 9px 12px;
-  font-size: 14px;
-  font-family: inherit;
-  color: var(--ink);
-  background: var(--panel);
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
-}
-
-.field input:focus,
-.field textarea:focus {
-  outline: 2px solid var(--accent);
-  outline-offset: 1px;
-  border-color: var(--accent);
-}
+.req { font-weight: 700; color: var(--danger); }
+.opt { font-weight: 400; color: var(--ink-soft); }
 
 .field textarea { resize: vertical; }
 
-/* 未定義（data/tags.json に無い）カテゴリ・タグの表示。追加はできず、値の保持と削除のみ操作できる。 */
-.chip-unknown {
-  background: #fdf7e3;
-  border-color: #e3d49a;
-  color: #6b5514;
-}
-
-.chip-unknown:hover { background: #fbefc9; border-color: #d8c374; color: #6b5514; }
-
-.field-warning {
-  margin: 8px 0 0;
-  font-size: 12px;
-  color: #6b5514;
-}
-
 #f-body {
-  font-family: "Consolas", "Menlo", "Yu Gothic", monospace;
-  font-size: 13.5px;
+  min-height: 24rem;
+  font-family: var(--font-mono);
+  font-size: 0.9375rem;
   line-height: 1.7;
 }
 
+.field-warning {
+  margin: var(--s2) 0 0;
+  padding: var(--s2) var(--s3);
+  font-size: var(--fs-small);
+  background: var(--warning-tint);
+  border: 1px solid var(--warning-line);
+}
+
+.field-warning::before {
+  content: "注意：";
+  font-weight: 700;
+  color: var(--warning-ink);
+}
+
 .field-error {
-  margin: 6px 0 0;
-  font-size: 12px;
-  color: #b23b3b;
+  margin: var(--s2) 0 0;
+  color: var(--danger);
 }
 
-.preview-section { position: sticky; top: 12px; }
+.field-error::before {
+  content: "エラー：";
+  font-weight: 700;
+}
 
+/* 未定義（data/tags.json に無い）カテゴリ・タグ。追加はできず、値の保持と削除のみ操作できる。破線と × で示す */
+.chip-unknown {
+  border-style: dashed;
+  background: var(--warning-tint);
+  border-color: var(--warning-line);
+  color: var(--ink);
+}
+
+.chip-unknown:hover { background: #fbefc9; border-color: var(--warning-ink); }
+
+/* プレビュー: 閲覧画面と同じ表示。入力欄と区別するため枠で囲む */
 .preview-detail {
-  padding: 4px 0 8px;
+  min-height: 5rem;
+  padding: var(--s3) var(--s4) var(--s4);
   border: 1px solid var(--line);
-  border-radius: var(--radius);
-  padding: 16px;
-  background: var(--panel);
-  min-height: 80px;
 }
+
+.preview-detail .detail-title { font-size: var(--fs-2xl); }
+.preview-detail .detail-header { padding-bottom: var(--s3); }
+.preview-detail .markdown-body { margin-top: var(--s4); }
 
 .preview-empty {
-  margin: 20px 0 0;
-  font-size: 13px;
-  color: var(--ink-soft);
-}
-
-.raw-heading {
-  margin: 20px 0 8px;
-  font-size: 13px;
+  margin: var(--s4) 0 0;
   color: var(--ink-soft);
 }
 
 .raw-output {
-  width: 100%;
-  padding: 12px 14px;
-  font-family: "Consolas", "Menlo", "Yu Gothic", monospace;
-  font-size: 12.5px;
+  font-family: var(--font-mono);
+  font-size: var(--fs-small);
   line-height: 1.7;
-  color: var(--ink);
-  background: #fafbfc;
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
+  background: var(--surface);
   resize: vertical;
 }
 
-.save-row { margin-top: 14px; }
+.save-row { margin-top: var(--s2); }
 
-.manifest-hint { margin-top: 14px; font-size: 13px; }
+.manifest-hint {
+  margin: var(--s3) 0 0;
+  font-size: var(--fs-small);
+}
 
 .manifest-snippet {
-  margin: 8px 0 0;
-  padding: 8px 10px;
+  margin: var(--s2) 0 0;
+  padding: var(--s2) var(--s3);
   background: #fff;
-  border: 1px solid #e3d49a;
-  border-radius: var(--radius);
-  font-family: "Consolas", "Menlo", "Yu Gothic", monospace;
-  font-size: 12.5px;
+  border: 1px solid var(--line);
+  font-family: var(--font-mono);
+  font-size: var(--fs-small);
   white-space: pre-wrap;
   word-break: break-word;
 }
 
+.page-editor code {
+  padding: 0 var(--s1);
+  font-family: var(--font-mono);
+  font-size: 0.9em;
+  background: #ececec;
+  border-radius: var(--radius-tag);
+}
+
+.page-editor .preview-detail .code-block code,
+.page-editor .manifest-snippet code { padding: 0; background: none; }
+
+@media (min-width: 901px) {
+  .preview-section { position: sticky; top: var(--s3); }
+}
+
 @media (max-width: 900px) {
-  .editor-grid { grid-template-columns: 1fr; }
-  .preview-section { position: static; }
+  .editor-grid { grid-template-columns: 1fr; gap: var(--s5); }
+}
+
+@media (max-width: 640px) {
+  .page-title { font-size: var(--fs-2xl); }
+  .preview-detail { padding: var(--s3); }
 }
