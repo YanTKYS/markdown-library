@@ -3,32 +3,26 @@
  * style.css のトークン・部品を前提に、フォームとプレビューの配置だけを追加する。
  */
 
-/* 2 カラムを使うため、エディタだけ少し広げる */
-.page-editor .container { max-width: 75rem; }
-
-.editor-main { padding-bottom: var(--s5); }
-
-.page-title {
-  margin: var(--s5) 0 var(--s2);
-  font-size: var(--fs-3xl);
-  line-height: 1.4;
+.editor-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--s2);
+  min-height: 3.5rem;
+  padding-block: var(--s1);
 }
 
-.page-lead {
-  margin: 0 0 var(--s4);
-  color: var(--ink-soft);
+.editor-nav .site-title { font-size: var(--fs-lg); }
+.page-editor .site-header { background: var(--ot-topbar); }
+
+.editor-hero {
+  background: var(--ot-hero);
+  border-top: var(--ot-row-line);
 }
 
-/* 章見出し: 太さと下の罫線だけで区切る */
-.section-title {
-  margin: 0 0 var(--s3);
-  padding-bottom: var(--s2);
-  font-size: var(--fs-xl);
-  line-height: 1.5;
-  border-bottom: 1px solid var(--line);
-}
-
-.preview-section .section-title:not(:first-child) { margin-top: var(--s5); }
+.editor-grid .chapter-title { border-top: var(--ot-chapter-rule); }
+.preview-section .chapter-title:not(:first-child) { margin-top: var(--s5); }
 
 /* 作成・読み込み */
 .load-section { margin-bottom: var(--s5); }
@@ -68,27 +62,42 @@
 .editor-grid {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-  gap: var(--s6);
+  gap: var(--s5);
   align-items: start;
 }
 
-/* フォーム: ラベル → 補足説明 → 入力欄 → エラー */
-.field { margin-bottom: var(--s5); }
+/* ラベルと値の軸をそろえる。本文は入力幅を確保する。 */
+.field {
+  display: grid;
+  grid-template-columns: var(--label-width) minmax(0, 1fr);
+  column-gap: var(--s3);
+  padding: var(--s3) 0;
+  border-bottom: var(--ot-row-line);
+}
 
+.field > :not(.field-label) { grid-column: 2; }
 .field-label {
-  display: block;
-  margin-bottom: var(--s1);
-  font-size: var(--fs-base);
+  grid-row: 1 / span 3;
+  align-self: stretch;
+  margin: 0;
+  padding-right: var(--s2);
+  border-right: var(--ot-axis);
   font-weight: 700;
 }
 
+.field-wide { display: block; }
+.field-wide .field-label { display: block; border: 0; margin-bottom: var(--s1); }
+
 .req,
 .opt {
+  display: inline-block;
   margin-left: var(--s2);
+  padding-left: var(--s2);
+  border-left: var(--ot-axis);
   font-size: var(--fs-small);
 }
 
-.req { font-weight: 700; color: var(--danger); }
+.req { font-weight: 700; color: var(--ot-cream); }
 .opt { font-weight: 400; color: var(--ink-soft); }
 
 .field textarea { resize: vertical; }
@@ -132,18 +141,17 @@
   color: var(--ink);
 }
 
-.chip-unknown:hover { background: #fbefc9; border-color: var(--warning-ink); }
+.chip-unknown:hover { background: var(--surface); border-color: var(--warning-ink); }
 
-/* プレビュー: 閲覧画面と同じ表示。入力欄と区別するため枠で囲む */
+/* 閲覧画面と同じ本文面を使う */
 .preview-detail {
   min-height: 5rem;
-  padding: var(--s3) var(--s4) var(--s4);
-  border: 1px solid var(--line);
+  padding: 0;
 }
 
 .preview-detail .detail-title { font-size: var(--fs-2xl); }
-.preview-detail .detail-header { padding-bottom: var(--s3); }
-.preview-detail .markdown-body { margin-top: var(--s4); }
+.preview-detail .detail-header { border-top: 0; padding: 0 0 var(--s3); }
+.preview-detail .markdown-body { margin-top: 0; }
 
 .preview-empty {
   margin: var(--s4) 0 0;
@@ -154,7 +162,6 @@
   font-family: var(--font-mono);
   font-size: var(--fs-small);
   line-height: 1.7;
-  background: var(--surface);
   resize: vertical;
 }
 
@@ -168,7 +175,8 @@
 .manifest-snippet {
   margin: var(--s2) 0 0;
   padding: var(--s2) var(--s3);
-  background: #fff;
+  background: var(--ot-input);
+  color: var(--ot-input-text);
   border: 1px solid var(--line);
   font-family: var(--font-mono);
   font-size: var(--fs-small);
@@ -176,16 +184,15 @@
   word-break: break-word;
 }
 
-.page-editor code {
+.page-editor .support-text code,
+.page-editor .notice code {
   padding: 0 var(--s1);
   font-family: var(--font-mono);
   font-size: 0.9em;
-  background: #ececec;
-  border-radius: var(--radius-tag);
+  background: var(--paper-code);
+  color: var(--ot-input-text);
 }
 
-.page-editor .preview-detail .code-block code,
-.page-editor .manifest-snippet code { padding: 0; background: none; }
 
 @media (min-width: 901px) {
   .preview-section { position: sticky; top: var(--s3); }
@@ -195,7 +202,12 @@
   .editor-grid { grid-template-columns: 1fr; gap: var(--s5); }
 }
 
-@media (max-width: 640px) {
-  .page-title { font-size: var(--fs-2xl); }
-  .preview-detail { padding: var(--s3); }
+@media (max-width: 599px) {
+  .field { display: block; }
+  .field-label {
+    display: block;
+    border-right: 0;
+    padding-right: 0;
+    margin-bottom: var(--s1);
+  }
 }

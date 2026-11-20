@@ -1,0 +1,65 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="272" height="256" viewBox="0 0 272 256" aria-hidden="true" focusable="false">
+  <!--
+    糸の交点（仮称）見出し用の模様。design-lab で独自に作図した図形で、
+    実在の織物の図柄・写真・型紙をなぞったものではなく、第三者の素材を含みません。
+    短い十字（交点）を2重の菱形の輪に並べた 136×128 のタイルを 2×2 で敷いています。
+    使うときは見出し面の右端だけに置き、情報や操作の上には重ねないでください。
+  -->
+  <defs>
+    <path id="x" d="M-3.5 0h7M0-3.5v7" fill="none" stroke-width="1.6" stroke-linecap="square"/>
+    <pattern id="weft" width="4" height="4" patternUnits="userSpaceOnUse">
+      <path d="M0 0.5h4" stroke="#ffffff" stroke-opacity="0.05"/>
+    </pattern>
+    <g id="tile">
+      <!-- 外の輪（中心 68,64／横 64・縦 60） -->
+      <g stroke="#e9edf0">
+        <use href="#x" x="68" y="4"/>
+        <use href="#x" x="132" y="64"/>
+        <use href="#x" x="68" y="124"/>
+        <use href="#x" x="4" y="64"/>
+        <use href="#x" x="80.8" y="16"/>
+        <use href="#x" x="119.2" y="76"/>
+        <use href="#x" x="55.2" y="112"/>
+        <use href="#x" x="16.8" y="52"/>
+        <use href="#x" x="93.6" y="28"/>
+        <use href="#x" x="106.4" y="88"/>
+        <use href="#x" x="42.4" y="100"/>
+        <use href="#x" x="29.6" y="40"/>
+        <use href="#x" x="106.4" y="40"/>
+        <use href="#x" x="93.6" y="100"/>
+        <use href="#x" x="29.6" y="88"/>
+        <use href="#x" x="42.4" y="28"/>
+        <use href="#x" x="119.2" y="52"/>
+        <use href="#x" x="80.8" y="112"/>
+        <use href="#x" x="16.8" y="76"/>
+        <use href="#x" x="55.2" y="16"/>
+      </g>
+      <!-- 内の輪（横 44・縦 40） -->
+      <g stroke="#6f9cbf">
+        <use href="#x" x="68" y="24"/>
+        <use href="#x" x="112" y="64"/>
+        <use href="#x" x="68" y="104"/>
+        <use href="#x" x="24" y="64"/>
+        <use href="#x" x="79" y="34"/>
+        <use href="#x" x="101" y="74"/>
+        <use href="#x" x="57" y="94"/>
+        <use href="#x" x="35" y="54"/>
+        <use href="#x" x="90" y="44"/>
+        <use href="#x" x="90" y="84"/>
+        <use href="#x" x="46" y="84"/>
+        <use href="#x" x="46" y="44"/>
+        <use href="#x" x="101" y="54"/>
+        <use href="#x" x="79" y="94"/>
+        <use href="#x" x="35" y="74"/>
+        <use href="#x" x="57" y="34"/>
+      </g>
+      <use href="#x" x="68" y="64" stroke="#e9edf0"/>
+    </g>
+  </defs>
+  <rect width="272" height="256" fill="#243752"/>
+  <rect width="272" height="256" fill="url(#weft)"/>
+  <use href="#tile"/>
+  <use href="#tile" x="136"/>
+  <use href="#tile" y="128"/>
+  <use href="#tile" x="136" y="128"/>
+</svg>
