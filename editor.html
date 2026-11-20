@@ -4,23 +4,29 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Markdownエディタ | Markdown Library</title>
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 16 16%27%3E%3Crect width=%2716%27 height=%2716%27 rx=%273%27 fill=%27%2314548c%27/%3E%3Cpath d=%27M4 5h8M4 8h8M4 11h5%27 stroke=%27%23fff%27 stroke-width=%271.5%27 stroke-linecap=%27round%27/%3E%3C/svg%3E">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 16 16%27%3E%3Crect width=%2716%27 height=%2716%27 rx=%273%27 fill=%27%2319283f%27/%3E%3Cpath d=%27M4 5h8M4 8h8M4 11h5%27 stroke=%27%23fff%27 stroke-width=%271.5%27 stroke-linecap=%27round%27/%3E%3C/svg%3E">
 <link rel="stylesheet" href="css/style.css">
 <link rel="stylesheet" href="css/editor.css">
 </head>
 <body class="page-editor">
 
 <header class="site-header">
-  <div class="container site-header-inner">
+  <div class="container editor-nav">
     <p class="site-title"><a href="index.html">Markdown Library</a></p>
     <a class="button button-secondary" href="index.html">← 一覧に戻る</a>
+  </div>
+  <div class="editor-hero">
+    <div class="container site-header-inner">
+      <div class="site-header-text">
+        <h1 class="site-title">Markdownエディタ</h1>
+        <p class="site-lead">タイトルやカテゴリを選び、プレビューを見ながら Markdown を作成・編集できます。</p>
+      </div>
+      <span class="hero-pattern" aria-hidden="true"></span>
+    </div>
   </div>
 </header>
 
 <main class="container editor-main">
-
-  <h1 class="page-title">Markdownエディタ</h1>
-  <p class="page-lead">タイトルやカテゴリなどの設定（front matter）を手書きせずに、Markdown の作成・編集を行うための支援ツールです。</p>
 
   <div class="notice">
     このツールは Markdown の作成・編集を支援するだけです。GitHub や公開サーバへの反映は行いません。
@@ -45,7 +51,7 @@
   <div class="editor-grid">
 
     <section class="form-section">
-      <h2 class="section-title">編集</h2>
+      <h2 class="chapter-title">編集</h2>
 
       <div class="field">
         <label class="field-label" for="f-title">タイトル<span class="req">必須</span></label>
@@ -73,7 +79,7 @@
         <input type="text" id="f-description" class="input" maxlength="80" autocomplete="off" aria-describedby="description-hint">
       </div>
 
-      <div class="field">
+      <div class="field field-wide">
         <label class="field-label" for="f-body">Markdown本文<span class="req">必須</span></label>
         <p id="body-hint" class="support-text">
           入力した内容がそのまま本文として保存されます。見出し（<code>#</code>）・箇条書き（<code>-</code> / <code>1.</code>）・太字（<code>**</code>）・コード（<code>`</code>）・コードブロック（<code>```言語名</code>）が使えます。
@@ -95,14 +101,14 @@
     </section>
 
     <section class="preview-section">
-      <h2 class="section-title">プレビュー</h2>
+      <h2 class="chapter-title">プレビュー</h2>
       <article id="preview-detail" class="detail preview-detail"></article>
 
-      <h2 class="section-title">Markdown出力</h2>
+      <h2 class="chapter-title">Markdown出力</h2>
       <p class="support-text">保存される Markdown 全文（front matter ＋ 本文）です。</p>
       <textarea id="raw-output" class="input raw-output" readonly rows="16" aria-label="生成される Markdown"></textarea>
 
-      <h2 class="section-title">保存</h2>
+      <h2 class="chapter-title">保存</h2>
       <p class="support-text">必須項目（タイトル・カテゴリ・説明・本文・保存ファイル名）をすべて入力すると、ダウンロードできます。</p>
       <div class="save-row">
         <button type="button" id="btn-download" class="button button-primary" disabled>.md ファイルをダウンロード</button>

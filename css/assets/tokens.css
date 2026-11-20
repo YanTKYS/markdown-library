@@ -1,0 +1,45 @@
+/*
+ * 糸の交点（仮称）— デザイントークン
+ * 宮古上布に着想した独自のデザイン。公式の意匠・伝統工芸の再現ではありません。
+ * 色・書体・罫だけを定義します。部品の CSS は対象アプリに合わせて書いてください。
+ * 外部フォント・CDN は使いません（端末にある書体へ順に落ちます）。
+ */
+:root {
+  /* 地と面 */
+  --ot-ground: #19283f;       /* 本文の地（濃藍） */
+  --ot-topbar: #18263b;       /* 上部の帯 */
+  --ot-hero: #243752;         /* 画面名の見出し面 */
+  --ot-rail: #213551;         /* 左の格子帯の地 */
+  --ot-header: #2c4057;       /* 表の見出し行 */
+  --ot-input: #f0f1e8;        /* 入力欄（明るい無地） */
+  --ot-input-text: #1c3049;   /* 入力欄の文字 */
+
+  /* 文字 */
+  --ot-text: #eeebe2;         /* 本文 */
+  --ot-muted: #aebbc4;        /* 補助文字 */
+
+  /* 糸と罫 */
+  --ot-thread: #8aa8b2;       /* 格子帯の糸・交点の印 */
+  --ot-rule: #6c8094;         /* 章の二重罫・縦軸 */
+  --ot-line: #45566e;         /* 行の区切り */
+
+  /* 操作と状態 */
+  --ot-cream: #f2e8cd;        /* 主操作・選択の塗り（文字は --ot-ground） */
+  --ot-lead: #e2e8de;         /* 集計の先頭行（文字は --ot-ground） */
+  --ot-bar: #afc7d1;          /* 横棒 */
+  --ot-focus: #ffd166;        /* フォーカスの外枠 */
+  --ot-error: #ffb0a3;        /* エラーの文字（濃藍の地の上） */
+  --ot-error-line: #ff8f80;   /* エラーの欄の枠 */
+
+  /* 書体（明朝は章見出し・画面名だけ。本文と操作はゴシック） */
+  --ot-font-mincho: 'BIZ UDPMincho', 'BIZ UDP明朝 Medium', 'Hiragino Mincho ProN', 'ヒラギノ明朝 ProN', 'Yu Mincho', '游明朝', 'Noto Serif JP', serif;
+  --ot-font-gothic: 'BIZ UDPGothic', 'BIZ UDPゴシック', 'Noto Sans JP', 'Hiragino Sans', 'ヒラギノ角ゴシック', 'Yu Gothic', '游ゴシック', Meiryo, sans-serif;
+  --ot-line-height: 1.7;
+
+  /* 罫 */
+  --ot-chapter-rule: 3px double var(--ot-rule);  /* 章の上 */
+  --ot-axis: 1px solid var(--ot-rule);           /* 章｜項目名｜値 の縦軸 */
+  --ot-row-line: 1px solid var(--ot-line);       /* 行の区切り */
+  --ot-rail-width: 16px;                         /* 狭い幅では 8px 前後 */
+  --ot-focus-ring: 3px solid var(--ot-focus);    /* outline に使う。outline-offset: 2px */
+}

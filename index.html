@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Markdown Library</title>
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 16 16%27%3E%3Crect width=%2716%27 height=%2716%27 rx=%273%27 fill=%27%2314548c%27/%3E%3Cpath d=%27M4 5h8M4 8h8M4 11h5%27 stroke=%27%23fff%27 stroke-width=%271.5%27 stroke-linecap=%27round%27/%3E%3C/svg%3E">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 16 16%27%3E%3Crect width=%2716%27 height=%2716%27 rx=%273%27 fill=%27%2319283f%27/%3E%3Cpath d=%27M4 5h8M4 8h8M4 11h5%27 stroke=%27%23fff%27 stroke-width=%271.5%27 stroke-linecap=%27round%27/%3E%3C/svg%3E">
 <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
@@ -15,7 +15,8 @@
       <h1 class="site-title">Markdown Library</h1>
       <p class="site-lead">業務で再利用できるMarkdown形式のナレッジを共有しています。</p>
     </div>
-    <a class="button button-secondary" href="editor.html">＋ Markdownを追加</a>
+    <a class="button button-primary" href="editor.html">＋ Markdownを追加</a>
+    <span class="hero-pattern" aria-hidden="true"></span>
   </div>
 </header>
 
@@ -30,34 +31,44 @@
 
       <p id="skipped" class="notice notice-warning" hidden></p>
 
-      <div class="search-box">
-        <label class="search-label" for="search">キーワード検索</label>
-        <p id="search-hint" class="support-text">
-          タイトル・説明・カテゴリ・タグ・本文をまとめて検索します。空白で区切ると、すべてを含むものに絞り込みます。
-        </p>
-        <input id="search" class="input search-input" type="search" autocomplete="off"
-               placeholder="例: 議事録　PlantUML　住民" aria-describedby="search-hint">
-      </div>
+      <section class="chapter filters" aria-labelledby="filters-title">
+        <h2 id="filters-title" class="chapter-title">検索条件</h2>
+        <div class="filter-fields">
+          <div class="filter-row">
+            <label class="row-label" for="search">キーワード検索</label>
+            <div>
+              <p id="search-hint" class="support-text">
+                タイトル・説明・カテゴリ・タグ・本文を検索します。空白で区切ると、すべてを含むものに絞り込みます。
+              </p>
+              <input id="search" class="input search-input" type="search" autocomplete="off"
+                     placeholder="例: 議事録　PlantUML　住民" aria-describedby="search-hint">
+            </div>
+          </div>
 
-      <div class="filter-group">
-        <h2 class="filter-title">カテゴリ</h2>
-        <p class="support-text">業務領域による大分類です。1つだけ選べます。</p>
-        <div id="category-filter" class="chips"></div>
-      </div>
+          <div class="filter-row" role="group" aria-labelledby="category-title" aria-describedby="category-hint">
+            <h3 id="category-title" class="row-label">カテゴリ</h3>
+            <div>
+              <p id="category-hint" class="support-text">1つ選べます。</p>
+              <div id="category-filter" class="chips"></div>
+            </div>
+          </div>
 
-      <div class="filter-group">
-        <h2 class="filter-title">タグ</h2>
-        <p class="support-text">用途・形式・対象による分類です。選ぶほど絞り込まれます。</p>
-        <div id="tag-filter" class="chips"></div>
-      </div>
+          <div class="filter-row" role="group" aria-labelledby="tag-title" aria-describedby="tag-hint">
+            <h3 id="tag-title" class="row-label">タグ</h3>
+            <div>
+              <p id="tag-hint" class="support-text">複数選べます。選ぶほど絞り込まれます。</p>
+              <div id="tag-filter" class="chips"></div>
+            </div>
+          </div>
 
-      <div id="active-filters" class="active-filters" hidden></div>
+          <div id="active-filters" class="active-filters" hidden></div>
+        </div>
+      </section>
 
-      <div class="results-header">
-        <h2 class="results-title">Markdown一覧</h2>
+      <div class="chapter results-header">
+        <h2 class="chapter-title">Markdown一覧</h2>
         <span id="count" class="count"></span>
       </div>
-
       <div id="results" class="results"></div>
     </div>
 
